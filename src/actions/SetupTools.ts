@@ -10,9 +10,7 @@ import { propagateDefaults } from './Propagator';
 
 async function listTypes(uri: Uri, of: string): Promise<[string, string][]> {
   const file = join(uri.fsPath, MAKE_LISTS);
-  return execFile('make', [`-f${file}`, of], { cwd: uri.fsPath }).then(res =>
-    Object.entries(parseProperties(res.stderr))
-  );
+  return execFile('make', [`-f${file}`, of], { cwd: uri.fsPath }).then(({stderr}) => Object.entries(parseProperties(stderr)));
 }
 
 export async function setupTools(): Promise<void> {

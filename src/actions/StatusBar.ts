@@ -1,7 +1,6 @@
 import { StatusBarItem, commands, window } from 'vscode';
 import { getContext } from '../utils/Context';
-import { performFlash } from './PerformFlash';
-import { performMake } from './PerformMake';
+import { performBuildTask, performFlashTask } from './Runner';
 import { setupDevice, setupProgrammer, setupTools } from './SetupTools';
 
 const items: { [key: string]: StatusBarItem } = {};
@@ -59,7 +58,7 @@ const getBuildItem = () => {
     'AVR.command.build',
     '$(file-binary) Build',
     'Build source code',
-    performMake
+    performBuildTask
   ));
 };
 
@@ -71,7 +70,7 @@ const getFlashItem = () => {
     'AVR.command.flash',
     '$(flame) Flash',
     'Flash binary to device',
-    performFlash
+    performFlashTask
   ));
 };
 
