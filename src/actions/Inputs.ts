@@ -24,13 +24,17 @@ export async function pickFolder(): Promise<Uri> {
   throw new Error('No folder');
 }
 
-export async function pickFile(placeholder: string, value: string | undefined, required: boolean, includeFiles: boolean, includeFolders: boolean): Promise<string> {
+export async function pickFile(placeholder: string, value: string | undefined,
+                      required: boolean, includeFiles: boolean, includeFolders: boolean,
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<string> {
   const input = window.createInputBox();
   if (value) {
     input.value = value;
   }
   input.ignoreFocusOut = true;
   input.placeholder = placeholder;
+  input.step = step;
+  input.totalSteps = totalSteps;
   input.buttons = [{ iconPath: getPlusIcon() }];
   const disposables: Disposable[] = [];
   return new Promise<string>((resolve, reject) => {
@@ -74,13 +78,17 @@ export async function pickFile(placeholder: string, value: string | undefined, r
   });
 }
 
-export async function pickFiles(placeholder: string, value: string[] | undefined, includeFiles: boolean, includeFolders: boolean): Promise<string[]> {
+export async function pickFiles(placeholder: string, value: string[] | undefined,
+                      includeFiles: boolean, includeFolders: boolean,
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<string[]> {
   const items: QuickPickItem[] = value ? value.map(lib => { return { label: lib, alwaysShow: true }; }) : [];
   const picker = window.createQuickPick();
   picker.items = items;
   picker.selectedItems = items;
   picker.ignoreFocusOut = true;
   picker.canSelectMany = true;
+  picker.step = step;
+  picker.totalSteps = totalSteps;
   picker.placeholder = placeholder;
   picker.buttons = [{ iconPath: getPlusIcon() }];
   const disposables: Disposable[] = [];
@@ -135,12 +143,15 @@ export async function pickFiles(placeholder: string, value: string[] | undefined
   }
 }
 
-export async function pickNumber(placeholder: string, value: number | undefined, required: boolean): Promise<number> {
+export async function pickNumber(placeholder: string, value: number | undefined, required: boolean,
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<number> {
   const input = window.createInputBox();
   if (value) {
     input.value = value.toString();
   }
   input.ignoreFocusOut = true;
+  input.step = step;
+  input.totalSteps = totalSteps;
   input.placeholder = placeholder;
   const disposables: Disposable[] = [];
   return new Promise<number>((resolve, reject) => {
@@ -163,12 +174,15 @@ export async function pickNumber(placeholder: string, value: number | undefined,
   });
 }
 
-export async function pickString(placeholder: string, value: string | undefined, required: boolean): Promise<string> {
+export async function pickString(placeholder: string, value: string | undefined, required: boolean,
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<string> {
   const input = window.createInputBox();
   if (value) {
     input.value = value.toString();
   }
   input.ignoreFocusOut = true;
+  input.step = step;
+  input.totalSteps = totalSteps;
   input.placeholder = placeholder;
   const disposables: Disposable[] = [];
   return new Promise<string>((resolve, reject) => {
@@ -189,16 +203,15 @@ export async function pickString(placeholder: string, value: string | undefined,
   });
 }
 
-export async function pickOne(
-  placeholder: string,
-  items: QuickPickItem[],
-  active: (item: QuickPickItem) => boolean
-): Promise<QuickPickItem> {
+export async function pickOne(placeholder: string, items: QuickPickItem[], active: (item: QuickPickItem) => boolean,
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<QuickPickItem> {
   const picker = window.createQuickPick();
   picker.items = items;
   picker.activeItems = items.filter(active);
   picker.ignoreFocusOut = true;
   picker.canSelectMany = false;
+  picker.step = step;
+  picker.totalSteps = totalSteps;
   picker.placeholder = placeholder;
   const disposables: Disposable[] = [];
   return new Promise<QuickPickItem>((resolve, reject) => {
@@ -217,16 +230,15 @@ export async function pickOne(
   });
 }
 
-export async function pickMany(
-  placeholder: string,
-  items: QuickPickItem[],
-  active: (item: QuickPickItem) => boolean
-): Promise<readonly QuickPickItem[]> {
+export async function pickMany(placeholder: string, items: QuickPickItem[], active: (item: QuickPickItem) => boolean,
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<readonly QuickPickItem[]> {
   const picker = window.createQuickPick();
   picker.items = items;
   picker.activeItems = items.filter(active);
   picker.ignoreFocusOut = true;
   picker.canSelectMany = true;
+  picker.step = step;
+  picker.totalSteps = totalSteps;
   picker.placeholder = placeholder;
   const disposables: Disposable[] = [];
   return new Promise<readonly QuickPickItem[]>((resolve, reject) => {
