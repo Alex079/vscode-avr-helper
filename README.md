@@ -1,34 +1,79 @@
 # AVR Helper Extension
 
-Helper extension to simplify code compilation and flashing for AVR chips
+Helper extension to simplify code compilation and flashing for AVR chips. This extension creates a C/C++ build system based on "make" in currently open folder. It needs make, avr-gcc, and avrdude installed. It uses C/C++ extension to provide language support.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+The AVR Helper adds five items to the window status bar:
 
-For example if there is an image subfolder under your extension project workspace:
+### Status bar: AVR
 
-\!\[feature X\]\(images/feature-x.png\)
+Displayed as `AVR`
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+This is the starting point to configure build system.
+- Makefiles are created when this item is clicked
+- Step 1: choose avr-gcc executable file
+- Step 2: choose avrdude executable file
+- Step 3: choose avrdude.conf
+- Step 4: choose additional source libraries
+
+### Status bar: Device
+
+Displayed as `attiny85 | 1000000 Hz`
+
+This item displays and allows for selecting MCU type and frequency.
+- Step 1: select MCU type according to the configured avrdude and avrdude.conf
+- Step 2: input MCU frequency in Hz
+
+### Status bar: Programmer
+
+Displayed as `stk500v1 | /dev/ttyACM0 | 19200`
+
+This item displays and allows for selecting programmer type, port, and baud rate.
+- Step 1: select programmer type according to the configured avrdude and avrdude.conf
+- Step 2: choose OS port to which the programmer is connected
+- Step 3: input the port rate in baud
+
+### Status bar: Build
+
+Displayed as `Build`
+
+This item triggers make of a currently open folder or a folder of currently displayed file. There are three options:
+- build: compile, link, display ELF information
+- clean: remove the build output
+- scan: list all C/C++ files which will be used for build
+
+### Status bar: Flash
+
+Displayed as `Flash`
+
+This item triggers a connection to the device using the programmer to list all available memory areas of the currently connected device. The user can select memory areas to flash, these areas must be present in ELF file sections for the operation to succeed. The build is triggered automatically before flashing if needed.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- make (build system)
+- avr-gcc (compilation)
+- avrdude (programmer driver)
+- C/C++ extension (language support)
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+|Setting|Value example|
+|-|-|
+|`AVR.source.compiler`|`/usr/bin/avr-c++`|
+|`AVR.source.libraries`|`/home/demo/Arduino/libraries`|
+|`AVR.device.type`|`attiny85`|
+|`AVR.device.frequency`|`1000000`|
+|`AVR.programmer.tool`|`/usr/bin/avrdude`|
+|`AVR.programmer.definitions`|`/etc/avrdude.conf`|
+|`AVR.programmer.type`|`stk500v1`|
+|`AVR.programmer.port`|`/dev/ttyACM0`|
+|`AVR.programmer.rate`|`19200`|
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Debug and simulation modes are not implemented
 
 ## [Changelog](CHANGELOG.md)
