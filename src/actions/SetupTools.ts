@@ -78,29 +78,17 @@ export async function setupProgrammer(): Promise<void> {
 async function prepareBuildFiles(uri: Uri): Promise<void> {
   const DEFAULT: any = getDefaultFiles();
   return fs
+
     .stat(join(uri.fsPath, MAKE_PROPS))
     .then(() => fs.stat(join(uri.fsPath, C_CPP_PROPS)))
-    .then(
-      () => {},
-      () => propagateDefaults(uri)
-    )
-    .catch(reason => {
-      throw new Error(reason);
-    })
-    .then(() => fs.stat(join(uri.fsPath, MAKE_TARGETS)))
-    .then(
-      () => {},
-      () => fs.copyFile(DEFAULT.targets, join(uri.fsPath, MAKE_TARGETS))
-    )
-    .catch(reason => {
-      throw new Error(reason);
-    })
+    .then(() => {}, () => propagateDefaults(uri))
+    .catch(reason => { throw new Error(reason); })
+
     .then(() => fs.stat(join(uri.fsPath, MAKE_LISTS)))
-    .then(
-      () => {},
-      () => fs.copyFile(DEFAULT.lists, join(uri.fsPath, MAKE_LISTS))
-    )
-    .catch(reason => {
-      throw new Error(reason);
-    });
+    .then(() => {}, () => fs.copyFile(DEFAULT.lists, join(uri.fsPath, MAKE_LISTS)))
+    .catch(reason => { throw new Error(reason); })
+    
+    .then(() => fs.stat(join(uri.fsPath, MAKE_TARGETS)))
+    .then(() => {}, () => fs.copyFile(DEFAULT.targets, join(uri.fsPath, MAKE_TARGETS)))
+    .catch(reason => { throw new Error(reason); });
 }
