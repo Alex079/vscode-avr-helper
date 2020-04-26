@@ -1,7 +1,8 @@
-import { StatusBarItem, commands, window } from 'vscode';
-import { getContext } from '../utils/Context';
+import { COMPILER, DEVICE_FREQ, DEVICE_TYPE, PROG_PORT, PROG_RATE, PROG_TYPE, PROGRAMMER } from '../utils/Conf';
+import { commands, StatusBarItem, Uri, window } from 'vscode';
 import { performBuildTask, performFlashTask } from './Runner';
 import { setupDevice, setupProgrammer, setupTools } from './SetupTools';
+import { getContext } from '../utils/Context';
 
 const items: { [key: string]: StatusBarItem } = {};
 
@@ -78,40 +79,52 @@ export const showSetupToolsItem = () => {
   getSetupToolsItem().show();
 };
 
-export const updateSetupDeviceItem = (text: string) => {
-  const sbi = getSetupDeviceItem();
-  sbi.text = text;
-  if (text) {
-    sbi.show();
+export const updateSetupDeviceItem = (uri: Uri | undefined) => {
+  const item = getSetupDeviceItem();
+  item.text = uri ? getSetupDeviceItemText(uri) : '';
+  if (item.text) {
+    item.show();
   } else {
-    sbi.hide();
+    item.hide();
   }
 };
 
-export const updateSetupProgrammerItem = (text: string) => {
-  const sbi = getSetupProgrammerItem();
-  sbi.text = text;
-  if (text) {
-    sbi.show();
+export const updateSetupProgrammerItem = (uri: Uri | undefined) => {
+  const item = getSetupProgrammerItem();
+  item.text = uri ? getSetupProgrammerItemText(uri) : '';
+  if (item.text) {
+    item.show();
   } else {
-    sbi.hide();
+    item.hide();
   }
 };
 
-export const updateBuildItem = (display: boolean) => {
-  const sbi = getBuildItem();
-  if (display) {
-    sbi.show();
+export const updateBuildItem = (uri: Uri | undefined) => {
+  const item = getBuildItem();
+  if (uri ? getBuildItemFlag(uri) : false) {
+    item.show();
   } else {
-    sbi.hide();
+    item.hide();
   }
 };
 
-export const updateFlashItem = (display: boolean) => {
-  const sbi = getFlashItem();
-  if (display) {
-    sbi.show();
+export const updateFlashItem = (uri: Uri | undefined) => {
+  const item = getFlashItem();
+  if (uri ? getFlashItemFlag(uri) : false) {
+    item.show();
   } else {
-    sbi.hide();
+    item.hide();
   }
 };
+
+const getSetupDeviceItemText = (uri: Uri): string =>
+  !!COMPILER.get(uri) && !!PROGRAMMER.get(uri) ? `${DEVICE_TYPE.get(uri) ?? '-'} | ${DEVICE_FREQ.get(uri) ?? '-'} Hz` : '';
+
+const getSetupProgrammerItemText = (uri: Uri): string =>
+  !!PROGRAMMER.get(uri) ? `${PROG_TYPE.get(uri) ?? '-'} | ${PROG_PORT.get(uri) ?? '-'} | ${PROG_RATE.get(uri) ?? '-'} Baud` : '';
+
+const getBuildItemFlag = (uri: Uri): boolean =>
+  !!DEVICE_TYPE.get(uri) && !!DEVICE_FREQ.get(uri);
+
+const getFlashItemFlag = (uri: Uri): boolean =>
+  !!PROG_TYPE.get(uri);

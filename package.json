@@ -2,7 +2,12 @@
 	"name": "vscode-avr-helper",
 	"displayName": "AVR Helper",
 	"description": "Helper extension to simplify code compilation and flashing for AVR chips",
-	"keywords": ["avr", "avrdude", "avr-gcc", "uploader"],
+	"keywords": [
+		"avr",
+		"avrdude",
+		"avr-gcc",
+		"uploader"
+	],
 	"author": {
 		"name": "Alex079"
 	},
@@ -21,7 +26,7 @@
 	"activationEvents": [
 		"*"
 	],
-	"main": "./out/extension.js",
+	"main": "./dist/extension",
 	"contributes": {
 		"configuration": [
 			{
@@ -86,28 +91,64 @@
 					}
 				}
 			}
+		],
+		"commands": [
+			{
+				"command": "AVR.command.setup.tools",
+				"title": "Perform initial setup",
+				"category": "AVR Helper"
+			},
+			{
+				"command": "AVR.command.setup.device",
+				"title": "Select device",
+				"category": "AVR Helper"
+			},
+			{
+				"command": "AVR.command.setup.programmer",
+				"title": "Select programmer",
+				"category": "AVR Helper"
+			},
+			{
+				"command": "AVR.command.build",
+				"title": "Build",
+				"category": "AVR Helper"
+			},
+			{
+				"command": "AVR.command.flash",
+				"title": "Flash",
+				"category": "AVR Helper"
+			}
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "yarn run compile",
-		"compile": "tsc -p ./",
-		"lint": "eslint src --ext ts",
-		"watch": "tsc -watch -p ./",
-		"pretest": "yarn run compile && yarn run lint",
-		"test": "node ./out/test/runTest.js"
+		"dist": "webpack",
+		"build": "webpack --config webpack.dev",
+		"watch": "webpack --config webpack.dev --watch",
+		"lint": "eslint --ext .ts --fix src src",
+		"clean": "rm -rf dist",
+		"test": "node dist/test/wrapper",
+		"verify": "yarn lint && yarn clean && yarn build && yarn test",
+		"vscode:prepublish": "yarn clean && yarn dist"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.44.0",
-		"@types/glob": "^7.1.1",
-		"@types/mocha": "^7.0.2",
-		"@types/node": "^13.11.0",
-		"eslint": "^6.8.0",
-		"@typescript-eslint/parser": "^2.26.0",
-		"@typescript-eslint/eslint-plugin": "^2.26.0",
-		"glob": "^7.1.6",
-		"mocha": "^7.1.1",
-		"typescript": "^3.8.3",
-		"vscode-test": "^1.3.0"
+		"@types/chai": "^4",
+		"@types/glob": "^7",
+		"@types/mocha": "^7",
+		"@types/node": "^13",
+		"@types/vscode": "^1",
+		"@typescript-eslint/eslint-plugin": "^2",
+		"@typescript-eslint/parser": "^2",
+		"chai": "^4",
+		"eslint": "^6",
+		"glob": "^7",
+		"mocha": "^7",
+		"ts-loader": "^7",
+		"typescript": "^3",
+		"vscode-test": "^1",
+		"webpack": "^4",
+		"webpack-cli": "^3",
+		"webpack-merge": "^4.2.2",
+		"webpack-node-externals": "^1"
 	},
 	"extensionDependencies": [
 		"ms-vscode.cpptools"

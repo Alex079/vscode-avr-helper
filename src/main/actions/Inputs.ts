@@ -52,8 +52,11 @@ export async function pickFile(placeholder: string, value: string | undefined,
             })
             .catch(() => (input.validationMessage = 'Does not exist'));
         }
+        else if (required) {
+          input.validationMessage = 'Must be specified';
+        }
         else {
-          required ? (input.validationMessage = 'Must be specified') : resolve(undefined);
+          resolve(undefined);
         }
       }),
       input.onDidTriggerButton(() => {
@@ -160,10 +163,15 @@ export async function pickNumber(placeholder: string, value: number | undefined,
       input.onDidAccept(() => {
         if (isNaN(+input.value)) {
           input.validationMessage = 'Must be a number';
-        } else if (input.value) {
+        }
+        else if (input.value) {
           resolve(+input.value);
-        } else {
-          required ? (input.validationMessage = 'Must be specified') : resolve(undefined);
+        }
+        else if (required) {
+          input.validationMessage = 'Must be specified';
+        }
+        else {
+          resolve(undefined);
         }
       })
     );
@@ -191,8 +199,12 @@ export async function pickString(placeholder: string, value: string | undefined,
       input.onDidAccept(() => {
         if (input.value) {
           resolve(input.value);
-        } else {
-          required ? (input.validationMessage = 'Must be specified') : resolve(undefined);
+        }
+        else if (required) {
+          input.validationMessage = 'Must be specified';
+        }
+        else {
+          resolve(undefined);
         }
       })
     );

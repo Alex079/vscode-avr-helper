@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { getCurrentFolder } from "../utils/WorkspaceFolders";
-import { pickOne, pickMany } from "./Inputs";
-import { tasks, Task, ShellExecution, QuickPickItem, WorkspaceFolder, window } from "vscode";
+import { pickMany, pickOne } from "./Inputs";
+import { QuickPickItem, ShellExecution, Task, tasks, window, WorkspaceFolder } from "vscode";
 import { MAKE_TARGETS } from "../utils/Files";
 import { getDeviceMemoryAreas } from './DeviceCapabilities';
 

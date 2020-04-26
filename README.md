@@ -6,7 +6,7 @@ Helper extension to simplify code compilation and flashing for AVR chips. This e
 
 The AVR Helper adds five items to the window status bar:
 
-### Status bar: AVR
+### Status bar: AVR (command: Perform initial setup)
 
 Displayed as `AVR`
 
@@ -17,7 +17,7 @@ This is the starting point to configure build system.
 - Step 3: choose avrdude.conf
 - Step 4: choose additional source libraries
 
-### Status bar: Device
+### Status bar: Device (command: Select device)
 
 Displayed as `attiny85 | 1000000 Hz`
 
@@ -25,7 +25,7 @@ This item displays and allows for selecting MCU type and frequency.
 - Step 1: select MCU type according to the configured avrdude and avrdude.conf
 - Step 2: input MCU frequency in Hz
 
-### Status bar: Programmer
+### Status bar: Programmer (command: Select programmer)
 
 Displayed as `stk500v1 | /dev/ttyACM0 | 19200`
 
@@ -34,7 +34,7 @@ This item displays and allows for selecting programmer type, port, and baud rate
 - Step 2: choose OS port to which the programmer is connected
 - Step 3: input the port rate in baud
 
-### Status bar: Build
+### Status bar: Build (command: Build)
 
 Displayed as `Build`
 
@@ -43,7 +43,7 @@ This item triggers make of a currently open folder or a folder of currently disp
 - clean: remove the build output
 - scan: list all C/C++ files which will be used for build
 
-### Status bar: Flash
+### Status bar: Flash (command: Flash)
 
 Displayed as `Flash`
 

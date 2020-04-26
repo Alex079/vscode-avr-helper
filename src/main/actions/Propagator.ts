@@ -1,10 +1,9 @@
 import { promises as fs } from 'fs';
 import { dirname, join } from 'path';
 import { Uri, window } from 'vscode';
-import { COMPILER, DEVICE_FREQ, DEVICE_TYPE, LIBRARIES, PROGRAMMER, PROG_DEFS, PROG_PORT, PROG_RATE, PROG_TYPE } from '../utils/Conf';
+import { COMPILER, DEVICE_FREQ, DEVICE_TYPE, LIBRARIES, PROG_DEFS, PROG_PORT, PROG_RATE, PROG_TYPE, PROGRAMMER } from '../utils/Conf';
 import { C_CPP_PROPS, MAKE_PROPS } from '../utils/Files';
 import { parseProperties, stringifyProperties } from '../utils/Properties';
-import { getBuildItemFlag, getFlashItemFlag, getSetupDeviceItemText, getSetupProgrammerItemText } from '../utils/StatusBar';
 import * as bar from './StatusBar';
 
 async function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): Promise<void> {
@@ -89,13 +88,13 @@ export async function updateProgrammerTool(uri: Uri): Promise<void> {
   .then(() => {
     DEVICE_TYPE.set(uri, undefined);
     DEVICE_FREQ.set(uri, undefined);
-    bar.updateSetupDeviceItem(getSetupDeviceItemText(uri));
+    bar.updateSetupDeviceItem(uri);
   })
   .then(() => {
     PROG_TYPE.set(uri, undefined);
     PROG_PORT.set(uri, undefined);
     PROG_RATE.set(uri, undefined);
-    bar.updateSetupProgrammerItem(getSetupProgrammerItemText(uri));
+    bar.updateSetupProgrammerItem(uri);
   })
   .then(
     () => window.showInformationMessage('Programmer is updated'),
@@ -109,13 +108,13 @@ export async function updateProgrammerDefs(uri: Uri): Promise<void> {
   .then(() => {
     DEVICE_TYPE.set(uri, undefined);
     DEVICE_FREQ.set(uri, undefined);
-    bar.updateSetupDeviceItem(getSetupDeviceItemText(uri));
+    bar.updateSetupDeviceItem(uri);
   })
   .then(() => {
     PROG_TYPE.set(uri, undefined);
     PROG_PORT.set(uri, undefined);
     PROG_RATE.set(uri, undefined);
-    bar.updateSetupProgrammerItem(getSetupProgrammerItemText(uri));
+    bar.updateSetupProgrammerItem(uri);
   })
   .then(
     () => window.showInformationMessage('Programmer definitions are updated'),
@@ -126,8 +125,8 @@ export async function updateProgrammerDefs(uri: Uri): Promise<void> {
 export async function updateProgrammerType(uri: Uri): Promise<void> {
   const value: string | undefined = PROG_TYPE.get(uri);
   mutateMakeProperties(uri, (conf: any) => (conf[PROG_TYPE.name()] = value ?? ''))
-  .then(() => bar.updateSetupProgrammerItem(getSetupProgrammerItemText(uri)))
-  .then(() => bar.updateFlashItem(getFlashItemFlag(uri)))
+  .then(() => bar.updateSetupProgrammerItem(uri))
+  .then(() => bar.updateFlashItem(uri))
   .then(
     () => window.showInformationMessage('Programmer type is updated'),
     (reason) => window.showErrorMessage(`Failure to update programmer type.\n${reason.toString()}`)
@@ -137,7 +136,7 @@ export async function updateProgrammerType(uri: Uri): Promise<void> {
 export async function updateProgrammerPort(uri: Uri): Promise<void> {
   const value: string | undefined = PROG_PORT.get(uri);
   mutateMakeProperties(uri, (conf: any) => (conf[PROG_PORT.name()] = value ?? ''))
-  .then(() => bar.updateSetupProgrammerItem(getSetupProgrammerItemText(uri)))
+  .then(() => bar.updateSetupProgrammerItem(uri))
   .then(
     () => window.showInformationMessage('Programmer upload port is updated'),
     (reason) => window.showErrorMessage(`Failure to update programmer upload port.\n${reason.toString()}`)
@@ -147,7 +146,7 @@ export async function updateProgrammerPort(uri: Uri): Promise<void> {
 export async function updateProgrammerRate(uri: Uri): Promise<void> {
   const value: number | undefined = PROG_RATE.get(uri);
   mutateMakeProperties(uri, (conf: any) => (conf[PROG_RATE.name()] = value ?? ''))
-  .then(() => bar.updateSetupProgrammerItem(getSetupProgrammerItemText(uri)))
+  .then(() => bar.updateSetupProgrammerItem(uri))
   .then(
     () => window.showInformationMessage('Programmer upload rate is updated'),
     (reason) => window.showErrorMessage(`Failure to update programmer upload rate.\n${reason.toString()}`)
@@ -166,8 +165,8 @@ export async function updateDeviceType(uri: Uri): Promise<void> {
       conf.compilerArgs = newArgs;
     })
   ])
-  .then(() => bar.updateSetupDeviceItem(getSetupDeviceItemText(uri)))
-  .then(() => bar.updateBuildItem(getBuildItemFlag(uri)))
+  .then(() => bar.updateSetupDeviceItem(uri))
+  .then(() => bar.updateBuildItem(uri))
   .then(
     () => window.showInformationMessage('Device type is updated'),
     (reason) => window.showErrorMessage(`Failure to update device type.\n${reason.toString()}`)
@@ -186,8 +185,8 @@ export async function updateDeviceFrequency(uri: Uri): Promise<void> {
       conf.compilerArgs = newArgs;
     })
   ])
-  .then(() => bar.updateSetupDeviceItem(getSetupDeviceItemText(uri)))
-  .then(() => bar.updateBuildItem(getBuildItemFlag(uri)))
+  .then(() => bar.updateSetupDeviceItem(uri))
+  .then(() => bar.updateBuildItem(uri))
   .then(
     () => window.showInformationMessage('Device frequency is updated'),
     (reason) => window.showErrorMessage(`Failure to update device frequency.\n${reason.toString()}`)

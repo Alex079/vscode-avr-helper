@@ -1,4 +1,4 @@
-import { WorkspaceFolder, window, workspace } from 'vscode';
+import { window, workspace, WorkspaceFolder } from 'vscode';
 
 export function getCurrentFolder(): WorkspaceFolder | undefined {
   const folders = workspace.workspaceFolders;
