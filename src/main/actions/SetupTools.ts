@@ -6,7 +6,7 @@ import { C_CPP_PROPS, getDefaultFiles, MAKE_LISTS, MAKE_PROPS, MAKE_TARGETS } fr
 import { execFile } from '../utils/Promisified';
 import { parseProperties } from '../utils/Properties';
 import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from './Inputs';
-import { propagateDefaults } from './Propagator';
+import { propagateSettings } from './Propagator';
 
 async function listTypes(uri: Uri, of: string): Promise<[string, string][]> {
   const file = join(uri.fsPath, MAKE_LISTS);
@@ -81,7 +81,7 @@ async function prepareBuildFiles(uri: Uri): Promise<void> {
 
     .stat(join(uri.fsPath, MAKE_PROPS))
     .then(() => fs.stat(join(uri.fsPath, C_CPP_PROPS)))
-    .then(() => {}, () => propagateDefaults(uri))
+    .then(() => {}, () => propagateSettings(uri))
     .catch(reason => { throw new Error(reason); })
 
     .then(() => fs.stat(join(uri.fsPath, MAKE_LISTS)))

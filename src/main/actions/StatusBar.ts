@@ -1,4 +1,4 @@
-import { COMPILER, DEVICE_FREQ, DEVICE_TYPE, PROG_PORT, PROG_RATE, PROG_TYPE, PROGRAMMER } from '../utils/Conf';
+import * as C from '../utils/Conf';
 import { commands, StatusBarItem, Uri, window } from 'vscode';
 import { performBuildTask, performFlashTask } from './Runner';
 import { setupDevice, setupProgrammer, setupTools } from './SetupTools';
@@ -118,13 +118,13 @@ export const updateFlashItem = (uri: Uri | undefined) => {
 };
 
 const getSetupDeviceItemText = (uri: Uri): string =>
-  !!COMPILER.get(uri) && !!PROGRAMMER.get(uri) ? `${DEVICE_TYPE.get(uri) ?? '-'} | ${DEVICE_FREQ.get(uri) ?? '-'} Hz` : '';
+  !!C.COMPILER.get(uri) && !!C.PROGRAMMER.get(uri) ? `${C.DEVICE_TYPE.get(uri) ?? '-'} | ${C.DEVICE_FREQ.get(uri) ?? '-'} Hz` : '';
 
 const getSetupProgrammerItemText = (uri: Uri): string =>
-  !!PROGRAMMER.get(uri) ? `${PROG_TYPE.get(uri) ?? '-'} | ${PROG_PORT.get(uri) ?? '-'} | ${PROG_RATE.get(uri) ?? '-'} Baud` : '';
+  !!C.PROGRAMMER.get(uri) ? `${C.PROG_TYPE.get(uri) ?? '-'} | ${C.PROG_PORT.get(uri) ?? '-'} | ${C.PROG_RATE.get(uri) ?? '-'} Baud` : '';
 
 const getBuildItemFlag = (uri: Uri): boolean =>
-  !!DEVICE_TYPE.get(uri) && !!DEVICE_FREQ.get(uri);
+  !!C.COMPILER.get(uri) && !!C.PROGRAMMER.get(uri) && !!C.DEVICE_TYPE.get(uri) && !!C.DEVICE_FREQ.get(uri);
 
 const getFlashItemFlag = (uri: Uri): boolean =>
-  !!PROG_TYPE.get(uri);
+  !!C.PROGRAMMER.get(uri) && !!C.DEVICE_TYPE.get(uri) && !!C.PROG_TYPE.get(uri);
