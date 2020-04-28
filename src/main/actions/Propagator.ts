@@ -12,12 +12,10 @@ async function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): 
   const location = dirname(name);
   return fs
     .mkdir(location)
-    .catch(console.trace)
+    .catch(() => {})
     .then(() => fs.readFile(name))
-    .then(
-      data => data ? JSON.parse(data.toString()) : {},
-      () => {}
-    )
+    .then(data => data ? JSON.parse(data.toString()) : {})
+    .catch(() => { return {}; })
     .then(properties => {
       if (!properties.configurations) {
         properties.configurations = [];
@@ -41,12 +39,10 @@ async function mutateMakeProperties(folder: Uri, mutator: (conf: any) => void): 
   const location = dirname(name);
   return fs
     .mkdir(location)
-    .catch(console.trace)
+    .catch(() => {})
     .then(() => fs.readFile(name))
-    .then(
-      data => parseProperties(data.toString()),
-      () => {}
-    )
+    .then(data => parseProperties(data.toString()))
+    .catch(() => { return {}; })
     .then(properties => {
       mutator(properties);
       return stringifyProperties(properties);
