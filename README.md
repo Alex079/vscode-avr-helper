@@ -27,7 +27,7 @@ This item displays and allows for selecting MCU type and frequency.
 
 ### Status bar: Programmer (command: Select programmer)
 
-Displayed as `stk500v1 | /dev/ttyACM0 | 19200`
+Displayed as `stk500v1 | /dev/ttyACM0 | 19200 Baud`
 
 This item displays and allows for selecting programmer type, port, and baud rate.
 - Step 1: select programmer type according to the configured avrdude and avrdude.conf
@@ -47,7 +47,7 @@ This item triggers make of a currently open folder or a folder of currently disp
 
 Displayed as `Flash`
 
-This item triggers a connection to the device using the programmer to list all available memory areas of the currently connected device. The user can select memory areas to flash, these areas must be present in ELF file sections for the operation to succeed. The build is triggered automatically before flashing if needed.
+This item triggers a connection to the device using the programmer to list all available memory areas of the currently connected device. The user can select memory areas to flash, these areas must be present in ELF file sections for the operation to succeed. The build is triggered automatically if needed before flashing.
 
 ## Requirements
 
