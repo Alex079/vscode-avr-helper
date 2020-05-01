@@ -4,6 +4,10 @@ Helper extension to simplify code compilation and flashing for AVR chips. This e
 
 ## Features
 
+Demo: source highlighting and build.
+
+![Demo: source highlighting and build](https://github.com/Alex079/vscode-avr-helper/wiki/images/setup-and-build.gif)
+
 The AVR Helper adds five items to the window status bar:
 
 ### Status bar: AVR (command: Perform initial setup)
