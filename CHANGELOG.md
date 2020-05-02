@@ -1,5 +1,6 @@
 # Change Log
-
-## [Unreleased]
-
-- Initial release
+## Unreleased
+-
+## v1.0.0
+- Build
+- Flash
