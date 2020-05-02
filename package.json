@@ -147,7 +147,7 @@
 		"vscode-test": "^1",
 		"webpack": "^4",
 		"webpack-cli": "^3",
-		"webpack-merge": "^4.2.2",
+		"webpack-merge": "^4",
 		"webpack-node-externals": "^1"
 	},
 	"extensionDependencies": [
