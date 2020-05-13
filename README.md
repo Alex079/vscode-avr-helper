@@ -79,5 +79,3 @@ This extension contributes the following settings:
 ## Known Issues
 
 Debug and simulation modes are not implemented
-
-## [Changelog](CHANGELOG.md)
