@@ -9,7 +9,7 @@ A.libraries = $(addprefix -I,$(wildcard $(AVR.source.libraries:=/.) $(AVR.source
 A.output.dir = .vscode/avr.build
 A.elf = $(A.output.dir)/output.elf
 A.list = $(A.output.dir)/output.lst
-A.src = $(call F.dep,$(sort $(wildcard *.c) $(wildcard *.cpp)))
+A.src = $(call F.dep,$(sort $(wildcard *.c) $(wildcard *.cpp) $(wildcard */*.c) $(wildcard */*.cpp) $(wildcard */*/*.c) $(wildcard */*/*.cpp)))
 A.obj = $(addprefix $(A.output.dir)/obj/,$(addsuffix .o,$(basename $(A.src))))
 
 F.dep.base = $(basename $1 $(filter %.h %.hpp,$(shell $(E.get.dep) $1)))
