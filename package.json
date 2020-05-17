@@ -2,6 +2,7 @@
 	"name": "vscode-avr-helper",
 	"displayName": "AVR Helper",
 	"description": "Helper extension to simplify code compilation and flashing for AVR chips",
+	"icon": "resources/icon.png",
 	"keywords": [
 		"avr",
 		"avrdude",
@@ -16,9 +17,9 @@
 		"url": "https://github.com/Alex079/vscode-avr-helper"
 	},
 	"publisher": "Alex079",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"engines": {
-		"vscode": "^1.44.0"
+		"vscode": "^1.45.1"
 	},
 	"categories": [
 		"Other"
