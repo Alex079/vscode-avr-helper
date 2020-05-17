@@ -1,10 +1,9 @@
 import { Uri } from 'vscode';
-import { join } from 'path';
 import { execFile } from '../utils/Promisified';
-import { MAKE_LISTS } from '../utils/Files';
+import { getMakeLists } from '../utils/Files';
 
 export async function getDeviceMemoryAreas(uri: Uri): Promise<string[]> {
-  return execFile('make', [`-f${join(uri.fsPath, MAKE_LISTS)}`, 'list-info'], { cwd: uri.fsPath })
+  return execFile('make', [`-f${getMakeLists(uri.fsPath)}`, 'list-info'], { cwd: uri.fsPath })
     .then(({ stderr }) => stderr.split('\n'))
     .then((lines) => {
       let memoryIsFound: boolean = false;
@@ -14,10 +13,10 @@ export async function getDeviceMemoryAreas(uri: Uri): Promise<string[]> {
           if (line === '') {
             memoryIsFound = false;
           }
-          const desc = /^\s*([^\s]+)/.exec(line);
-          if (desc) {
-            if (desc[1] !== '-----------') {
-              result.push(desc[1]);
+          else {
+            const description = /\S+/.exec(line)?.[0];
+            if (description && description !== '-----------') {
+              result.push(description);
             }
           }
         }
