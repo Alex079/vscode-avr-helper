@@ -2,13 +2,13 @@ import { promises as fs } from 'fs';
 import { dirname, join } from 'path';
 import { Uri } from 'vscode';
 import * as C from '../utils/Conf';
-import { C_CPP_PROPS, MAKE_PROPS } from '../utils/Files';
+import { getCCppProps, getMakeProps } from '../utils/Files';
 import { parseProperties, stringifyProperties } from '../utils/Properties';
 
 const avrFilter = (c: any) => c.name === 'AVR';
 
 async function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): Promise<void> {
-  const name = join(folder.fsPath, C_CPP_PROPS);
+  const name = getCCppProps(folder.fsPath);
   const location = dirname(name);
   return fs
     .mkdir(location)
@@ -35,7 +35,7 @@ async function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): 
 }
 
 async function mutateMakeProperties(folder: Uri, mutator: (conf: any) => void): Promise<void> {
-  const name = join(folder.fsPath, MAKE_PROPS);
+  const name = getMakeProps(folder.fsPath);
   const location = dirname(name);
   return fs
     .mkdir(location)

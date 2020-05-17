@@ -1,16 +1,15 @@
 import { promises as fs } from 'fs';
-import { join } from 'path';
 import { Uri } from 'vscode';
 import * as C from '../utils/Conf';
-import { C_CPP_PROPS, getDefaultFiles, MAKE_LISTS, MAKE_PROPS, MAKE_TARGETS } from '../utils/Files';
+import { getCCppProps, getDefaultMakeLists, getDefaultMakeTargets, getMakeLists, getMakeProps, getMakeTargets } from '../utils/Files';
 import { execFile } from '../utils/Promisified';
 import { parseProperties } from '../utils/Properties';
 import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from './Inputs';
 import { propagateSettings } from './Propagator';
 
 async function listTypes(uri: Uri, of: string): Promise<[string, string][]> {
-  const file = join(uri.fsPath, MAKE_LISTS);
-  return execFile('make', [`-f${file}`, of], { cwd: uri.fsPath }).then(({stderr}) => Object.entries(parseProperties(stderr)));
+  return execFile('make', [`-f${getMakeLists(uri.fsPath)}`, of], { cwd: uri.fsPath })
+    .then(({stderr}) => Object.entries(parseProperties(stderr)));
 }
 
 export async function setupTools(): Promise<void> {
@@ -76,19 +75,18 @@ export async function setupProgrammer(): Promise<void> {
 }
 
 async function prepareBuildFiles(uri: Uri): Promise<void> {
-  const DEFAULT: any = getDefaultFiles();
   return fs
 
-    .stat(join(uri.fsPath, MAKE_PROPS))
-    .then(() => fs.stat(join(uri.fsPath, C_CPP_PROPS)))
+    .stat(getMakeProps(uri.fsPath))
+    .then(() => fs.stat(getCCppProps(uri.fsPath)))
     .then(() => {}, () => propagateSettings(uri))
     .catch(reason => { throw new Error(reason); })
 
-    .then(() => fs.stat(join(uri.fsPath, MAKE_LISTS)))
-    .then(() => {}, () => fs.copyFile(DEFAULT.lists, join(uri.fsPath, MAKE_LISTS)))
+    .then(() => fs.stat(getMakeLists(uri.fsPath)))
+    .then(() => {}, () => fs.copyFile(getDefaultMakeLists(), getMakeLists(uri.fsPath)))
     .catch(reason => { throw new Error(reason); })
     
-    .then(() => fs.stat(join(uri.fsPath, MAKE_TARGETS)))
-    .then(() => {}, () => fs.copyFile(DEFAULT.targets, join(uri.fsPath, MAKE_TARGETS)))
+    .then(() => fs.stat(getMakeTargets(uri.fsPath)))
+    .then(() => {}, () => fs.copyFile(getDefaultMakeTargets(), getMakeTargets(uri.fsPath)))
     .catch(reason => { throw new Error(reason); });
 }

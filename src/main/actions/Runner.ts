@@ -1,8 +1,7 @@
-import { join } from 'path';
 import { getCurrentFolder } from "../utils/WorkspaceFolders";
 import { pickMany, pickOne } from "./Inputs";
 import { QuickPickItem, ShellExecution, Task, tasks, window, WorkspaceFolder } from "vscode";
-import { MAKE_TARGETS } from "../utils/Files";
+import { getMakeTargets } from "../utils/Files";
 import { getDeviceMemoryAreas } from './DeviceCapabilities';
 
 const GOALS: string[] = ['build', 'clean', 'scan'];
@@ -10,7 +9,7 @@ const ERASE: string = '(erase chip)';
 
 const toItem = (i: string): QuickPickItem => { return { label: i }; };
 const fromItem = (i: QuickPickItem): string => i.label;
-const toFile = (folder: WorkspaceFolder): string => join(folder.uri.fsPath, MAKE_TARGETS);
+const toFile = (folder: WorkspaceFolder): string => getMakeTargets(folder.uri.fsPath);
 
 export async function performBuildTask(): Promise<void> {
     const folder = getCurrentFolder();

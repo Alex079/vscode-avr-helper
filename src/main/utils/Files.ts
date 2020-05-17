@@ -1,22 +1,26 @@
 import { Uri } from 'vscode';
-import { getContext } from './Context';
 import { join } from 'path';
+import { getContext } from './Context';
 
-export const C_CPP_PROPS: string = join('.vscode', 'c_cpp_properties.json');
-export const MAKE_PROPS: string = join('.vscode', 'avr.properties.mk');
-export const MAKE_LISTS: string = join('.vscode', 'avr.lists.mk');
-export const MAKE_TARGETS: string = join('.vscode', 'avr.targets.mk');
+const C_CPP_PROPS: string = join('.vscode', 'c_cpp_properties.json');
+const MAKE_PROPS: string = join('.vscode', 'avr.properties.mk');
+const MAKE_LISTS: string = join('.vscode', 'avr.lists.mk');
+const MAKE_TARGETS: string = join('.vscode', 'avr.targets.mk');
+const PLUS_LIGHT = join('resources', 'plus-light.svg');
+const PLUS_DARK = join('resources', 'plus-dark.svg');
+const DEFAULT_MAKE_LISTS: string = join('resources', 'avr.lists.mk');
+const DEFAULT_MAKE_TARGETS: string = join('resources', 'avr.targets.mk');
 
-export function getPlusIcon(): any {
+export const getCCppProps = (folder: string) => join(folder, C_CPP_PROPS);
+export const getMakeProps = (folder: string) => join(folder, MAKE_PROPS);
+export const getMakeLists = (folder: string) => join(folder, MAKE_LISTS);
+export const getMakeTargets = (folder: string) => join(folder, MAKE_TARGETS);
+export const getDefaultMakeLists = () => join(getContext().extensionPath, DEFAULT_MAKE_LISTS);
+export const getDefaultMakeTargets = () => join(getContext().extensionPath, DEFAULT_MAKE_TARGETS);
+export const getPlusIcon = () => {
+  const uri = getContext().extensionUri;
   return {
-    light: Uri.file(getContext().asAbsolutePath('resources/plus-light.svg')),
-    dark: Uri.file(getContext().asAbsolutePath('resources/plus-dark.svg'))
+    light: Uri.joinPath(uri, PLUS_LIGHT),
+    dark: Uri.joinPath(uri, PLUS_DARK)
   };
-}
-
-export function getDefaultFiles(): any {
-  return {
-    lists: getContext().asAbsolutePath('resources/avr.lists.mk'),
-    targets: getContext().asAbsolutePath('resources/avr.targets.mk')
-  };
-}
+};
