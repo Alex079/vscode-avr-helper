@@ -37,16 +37,7 @@ module.exports = {
       {
         test: /\.ts$/,
         include: path.resolve(__dirname, 'src'),
-        // exclude: /node_modules/,
         loader: 'ts-loader'
-        // use: [{
-        //     loader: 'ts-loader',
-        //     options: {
-        //         compilerOptions: {
-        //             "module": "es6"
-        //         }
-        //     }
-        // }]
       }
     ]
   }
