@@ -54,22 +54,12 @@ export async function propagateSettings(uri: Uri): Promise<any> {
   const libraries: string[] = C.LIBRARIES.get(uri) ?? [];
   const deviceType: string | undefined = C.DEVICE_TYPE.get(uri);
   const deviceFreq: number | undefined = C.DEVICE_FREQ.get(uri);
-  const programmer: string | undefined = C.PROGRAMMER.get(uri);
-  const progDefs: string | undefined = C.PROG_DEFS.get(uri);
-  const progType: string | undefined = C.PROG_TYPE.get(uri);
-  const progPort: string | undefined = C.PROG_PORT.get(uri);
-  const progRate: number | undefined = C.PROG_RATE.get(uri);
   return Promise.all([
     mutateMakeProperties(uri, (conf: any) => {
       conf[C.COMPILER.name()] = compiler ?? '';
       conf[C.LIBRARIES.name()] = libraries.join(' ');
       conf[C.DEVICE_TYPE.name()] = deviceType ?? '';
       conf[C.DEVICE_FREQ.name()] = deviceFreq ? `${deviceFreq}UL` : '';
-      conf[C.PROGRAMMER.name()] = programmer ?? '';
-      conf[C.PROG_DEFS.name()] = progDefs ?? '';
-      conf[C.PROG_TYPE.name()] = progType ?? '';
-      conf[C.PROG_PORT.name()] = progPort ?? '';
-      conf[C.PROG_RATE.name()] = progRate ?? '';
     }),
     mutateCCppProperties(uri, (conf: any) => {
       conf.compilerPath = compiler ?? '';

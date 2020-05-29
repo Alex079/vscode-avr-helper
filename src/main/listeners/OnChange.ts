@@ -1,8 +1,7 @@
 import * as C from '../utils/Conf';
 import { propagateSettings } from '../actions/Propagator';
-import { ConfigurationChangeEvent, window, workspace } from 'vscode';
+import { ConfigurationChangeEvent, Uri, window, workspace } from 'vscode';
 import { updateBuildItem, updateFlashItem, updateSetupDeviceItem, updateSetupProgrammerItem } from '../actions/StatusBar';
-import { getCurrentFolder } from '../utils/WorkspaceFolders';
 
 export async function onChangeConfiguration(event: ConfigurationChangeEvent): Promise<any> {
   if (!workspace.workspaceFolders) {
@@ -13,23 +12,34 @@ export async function onChangeConfiguration(event: ConfigurationChangeEvent): Pr
     if (event.affectsConfiguration(C.COMPILER.name(), uri) ||
         event.affectsConfiguration(C.LIBRARIES.name(), uri) ||
         event.affectsConfiguration(C.DEVICE_TYPE.name(), uri) ||
-        event.affectsConfiguration(C.DEVICE_FREQ.name(), uri) ||
-        event.affectsConfiguration(C.PROGRAMMER.name(), uri) ||
-        event.affectsConfiguration(C.PROG_DEFS.name(), uri) ||
-        event.affectsConfiguration(C.PROG_TYPE.name(), uri) ||
-        event.affectsConfiguration(C.PROG_PORT.name(), uri) ||
-        event.affectsConfiguration(C.PROG_RATE.name(), uri)) {
+        event.affectsConfiguration(C.DEVICE_FREQ.name(), uri)) {
       return propagateSettings(uri)
         .then(updateStatusBar)
         .catch((reason) => window.showErrorMessage(reason.toString()));
     }
     return;
   });
-  
+}
+
+function getCurrentUri(): Uri | undefined {
+  const folders = workspace.workspaceFolders;
+  if (folders) {
+    const editorUri = window.activeTextEditor?.document.uri;
+    if (editorUri) {
+      const folder = workspace.getWorkspaceFolder(editorUri);
+      if (folder) {
+        return folder.uri;
+      }
+    }
+    if (folders.length === 1) {
+      return folders[0].uri;
+    }
+  }
+  return undefined;
 }
 
 function updateStatusBar(): void {
-  const uri = getCurrentFolder()?.uri;
+  const uri = getCurrentUri();
   updateSetupDeviceItem(uri);
   updateSetupProgrammerItem(uri);
   updateBuildItem(uri);

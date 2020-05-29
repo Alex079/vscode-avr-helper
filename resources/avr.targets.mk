@@ -23,10 +23,7 @@ E.link = $(E.compiler) -Wall -Wextra -Os -g -flto -fuse-linker-plugin -Wl,--gc-s
 E.make.list = $(A.compiler.dir)avr-objdump --disassemble --source --line-numbers --demangle
 E.get.size = $(A.compiler.dir)avr-size -A
 
-E.prog.opt = $(addprefix -C,$(AVR.programmer.definitions)) $(addprefix -P,$(AVR.programmer.port)) $(addprefix -b,$(AVR.programmer.rate))
-E.prog = $(AVR.programmer.tool) -v -p$(AVR.device.type) -c$(AVR.programmer.type) $(E.prog.opt)
-
-.PHONY : clean build scan erase write read
+.PHONY : clean build scan
 
 build : $(A.list)
 	@$(E.get.size) $(A.elf)
@@ -39,18 +36,6 @@ scan :
 	$(info )
 	$(foreach s,$(A.src),$(info $(realpath $(s))))
 	$(info )
-
-erase :
-	$(info ===== Erasing)
-	$(E.prog) -e
-
-write : $(A.elf)
-	$(info ===== Writing $(AVR_MEMORY))
-	$(E.prog) $(if $(AVR_ERASE),-e) $(foreach M,$(AVR_MEMORY),-U$(M):w:$<:e)
-
-read :
-	$(info ===== Reading $(AVR_MEMORY))
-	$(E.prog) $(foreach M,$(AVR_MEMORY),-U$(M):r:-:i)
 
 -include $(A.obj:.o=.d)
 
