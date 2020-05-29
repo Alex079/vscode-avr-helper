@@ -1,24 +1,29 @@
 import { promises as fs } from 'fs';
-import { Disposable, QuickPickItem, Uri, window, workspace } from 'vscode';
+import { Disposable, QuickPickItem, window, workspace, WorkspaceFolder } from 'vscode';
 import { getPlusIcon } from '../utils/Files';
 
-export async function pickFolder(): Promise<Uri> {
+export async function pickFolder(): Promise<WorkspaceFolder> {
   const folders = workspace.workspaceFolders;
   if (folders) {
     const editorUri = window.activeTextEditor?.document.uri;
     if (editorUri) {
-      const uri = workspace.getWorkspaceFolder(editorUri)?.uri;
-      if (uri) {
-        return uri;
+      const folder = workspace.getWorkspaceFolder(editorUri);
+      if (folder) {
+        return folder;
       }
     }
     switch (folders.length) {
-      case 1: return Promise.resolve(folders[0].uri);
-      default: return new Promise((resolve, reject) =>
-        window
-          .showWorkspaceFolderPick({ ignoreFocusOut: true })
-          .then(folder => folder?.uri)
-          .then(uri => uri ? resolve(uri) : reject('Interrupted')));
+      case 1: return folders[0];
+      default: return window
+        .showWorkspaceFolderPick({ ignoreFocusOut: true })
+        .then(folder =>
+          {
+            if (!folder) {
+              throw new Error('Interrupted');
+            }
+            return folder;
+          }
+        );
     }
   }
   throw new Error('No folder');
@@ -84,7 +89,7 @@ export async function pickFile(placeholder: string, value: string | undefined,
 export async function pickFiles(placeholder: string, value: string[] | undefined,
                       includeFiles: boolean, includeFolders: boolean,
                       step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<string[]> {
-  const items: QuickPickItem[] = value ? value.map(lib => { return { label: lib, alwaysShow: true }; }) : [];
+  const items: QuickPickItem[] = value ? value.map(lib => ({ label: lib, alwaysShow: true })) : [];
   const picker = window.createQuickPick();
   picker.items = items;
   picker.selectedItems = items;

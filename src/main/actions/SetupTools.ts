@@ -1,21 +1,33 @@
 import { promises as fs } from 'fs';
-import { Uri } from 'vscode';
+import { Uri, WorkspaceFolder } from 'vscode';
 import * as C from '../utils/Conf';
-import { getCCppProps, getDefaultMakeLists, getDefaultMakeTargets, getMakeLists, getMakeProps, getMakeTargets } from '../utils/Files';
-import { execFile } from '../utils/Promisified';
+import { getCCppProps, getDefaultMakeTargets, getMakeProps, getMakeTargets } from '../utils/Files';
 import { parseProperties } from '../utils/Properties';
 import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from './Inputs';
 import { propagateSettings } from './Propagator';
+import { spawnSync } from 'child_process';
 
-async function listTypes(uri: Uri, of: string): Promise<[string, string][]> {
-  return execFile('make', [`-f${getMakeLists(uri.fsPath)}`, of], { cwd: uri.fsPath })
-    .then(({stderr}) => Object.entries(parseProperties(stderr)));
+function listTypes(folder: WorkspaceFolder, of: string): [string, string][] {
+  const exe: string | undefined = C.PROGRAMMER.get(folder.uri);
+  if (!exe) {
+    return [];
+  }
+  const args: string[] = [of];
+  const defs: string | undefined = C.PROG_DEFS.get(folder.uri);
+  if (defs) {
+    args.push('-C', defs);
+  }
+  const info = spawnSync(exe, args, { cwd: folder.uri.fsPath });
+  if (info.error) {
+    throw new Error(info.error.message);
+  }
+  return Object.entries(parseProperties(info.stderr.toString()));
 }
 
 export async function setupTools(): Promise<void> {
-  const uri = await pickFolder();
+  const uri = (await pickFolder()).uri;
 
-  await prepareBuildFiles(uri)
+  prepareBuildFiles(uri)
     .then(() => pickFile('Full path to compiler executable', C.COMPILER.get(uri), true, true, false, 1, 4))
     .then(newCompiler => C.COMPILER.set(uri, newCompiler))
 
@@ -32,61 +44,38 @@ export async function setupTools(): Promise<void> {
 }
 
 export async function setupDevice(): Promise<void> {
-  const uri = await pickFolder();
+  const folder = await pickFolder();
+  const devTypes = listTypes(folder, '-p?')
+    .map(([id, name]) => ({ label: (name ? name : id), description: (id) }));
 
-  await prepareBuildFiles(uri)
-    .then(() => listTypes(uri, 'list-part'))
-    .then(devTypes =>
-      devTypes.map(([id, name]) => {
-        return { label: name ? name : id, description: id };
-      })
-    )
-    .then(devTypes => pickOne('Device type', devTypes, item => item.label.toLowerCase() === C.DEVICE_TYPE.get(uri), 1, 2))
+  pickOne('Device type', devTypes, item => item.label.toLowerCase() === C.DEVICE_TYPE.get(folder.uri), 1, 2)
     .then(newDevType => newDevType.label.toLowerCase())
-    .then(newDevType => C.DEVICE_TYPE.set(uri, newDevType))
-
-    .then(() => pickNumber('Device frequency', C.DEVICE_FREQ.get(uri), true, 2, 2))
-    .then(newFrequency => C.DEVICE_FREQ.set(uri, newFrequency))
-
+    .then(newDevType => C.DEVICE_TYPE.set(folder.uri, newDevType))
+    .then(() => pickNumber('Device frequency', C.DEVICE_FREQ.get(folder.uri), true, 2, 2))
+    .then(newFrequency => C.DEVICE_FREQ.set(folder.uri, newFrequency))
     .catch(console.trace);
 }
 
 export async function setupProgrammer(): Promise<void> {
-  const uri = await pickFolder();
+  const folder = await pickFolder();
+  const progTypes = listTypes(folder, '-c?')
+    .map(([id, name]) => ({ label: (name ? name : id), description: (id) }));
 
-  await prepareBuildFiles(uri)
-    .then(() => listTypes(uri, 'list-prog'))
-    .then(progTypes =>
-      progTypes.map(([id, name]) => {
-        return { label: name ? name : id, description: id };
-      })
-    )
-    .then(progTypes => pickOne('Programmer type', progTypes, item => item.description?.toLowerCase() === C.PROG_TYPE.get(uri), 1, 3))
+  pickOne('Programmer type', progTypes, item => item.description?.toLowerCase() === C.PROG_TYPE.get(folder.uri), 1, 3)
     .then(newProgType => newProgType.description?.toLowerCase())
-    .then(newProgType => C.PROG_TYPE.set(uri, newProgType))
-
-    .then(() => pickString('Upload port', C.PROG_PORT.get(uri), false, 2, 3))
-    .then(newPort => C.PROG_PORT.set(uri, newPort))
-
-    .then(() => pickNumber('Upload rate', C.PROG_RATE.get(uri), false, 3, 3))
-    .then(newRate => C.PROG_RATE.set(uri, newRate))
-
+    .then(newProgType => C.PROG_TYPE.set(folder.uri, newProgType))
+    .then(() => pickString('Upload port', C.PROG_PORT.get(folder.uri), false, 2, 3))
+    .then(newPort => C.PROG_PORT.set(folder.uri, newPort))
+    .then(() => pickNumber('Upload rate', C.PROG_RATE.get(folder.uri), false, 3, 3))
+    .then(newRate => C.PROG_RATE.set(folder.uri, newRate))
     .catch(console.trace);
 }
 
 async function prepareBuildFiles(uri: Uri): Promise<void> {
-  return fs
-
+  fs
     .stat(getMakeProps(uri.fsPath))
     .then(() => fs.stat(getCCppProps(uri.fsPath)))
     .then(() => {}, () => propagateSettings(uri))
-    .catch(reason => { throw new Error(reason); })
-
-    .then(() => fs.stat(getMakeLists(uri.fsPath)))
-    .then(() => {}, () => fs.copyFile(getDefaultMakeLists(), getMakeLists(uri.fsPath)))
-    .catch(reason => { throw new Error(reason); })
-    
     .then(() => fs.stat(getMakeTargets(uri.fsPath)))
-    .then(() => {}, () => fs.copyFile(getDefaultMakeTargets(), getMakeTargets(uri.fsPath)))
-    .catch(reason => { throw new Error(reason); });
+    .then(() => {}, () => fs.copyFile(getDefaultMakeTargets(), getMakeTargets(uri.fsPath)));
 }
