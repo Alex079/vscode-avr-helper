@@ -17,7 +17,7 @@
 		"url": "https://github.com/Alex079/vscode-avr-helper"
 	},
 	"publisher": "Alex079",
-	"version": "1.0.2",
+	"version": "1.1.0",
 	"engines": {
 		"vscode": "^1.45.1"
 	},
@@ -35,7 +35,7 @@
 				"properties": {
 					"AVR.source.compiler": {
 						"type": "string",
-						"default": null,
+						"default": "",
 						"scope": "resource",
 						"description": "Path to compiler executable (avr-c++)"
 					},
@@ -50,42 +50,42 @@
 					},
 					"AVR.device.type": {
 						"type": "string",
-						"default": null,
+						"default": "",
 						"scope": "resource",
 						"description": "MCU type"
 					},
 					"AVR.device.frequency": {
-						"type": "integer",
+						"type": ["integer", "null"],
 						"default": null,
 						"scope": "resource",
 						"description": "MCU frequency"
 					},
 					"AVR.programmer.tool": {
 						"type": "string",
-						"default": null,
+						"default": "",
 						"scope": "resource",
 						"description": "Path to programmer tool (avrdude)"
 					},
 					"AVR.programmer.definitions": {
 						"type": "string",
-						"default": null,
+						"default": "",
 						"scope": "resource",
 						"description": "Path to programmer definitions (avrdude.conf)"
 					},
 					"AVR.programmer.type": {
 						"type": "string",
-						"default": null,
+						"default": "",
 						"scope": "resource",
 						"description": "Programmer type"
 					},
 					"AVR.programmer.port": {
 						"type": "string",
-						"default": null,
+						"default": "",
 						"scope": "resource",
 						"description": "Programmer upload port"
 					},
 					"AVR.programmer.rate": {
-						"type": "integer",
+						"type": ["integer", "null"],
 						"default": null,
 						"scope": "resource",
 						"description": "Programmer upload rate"
