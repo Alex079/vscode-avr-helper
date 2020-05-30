@@ -1,3 +1,7 @@
+## v1.1.0
+
+- Call programmer directly instead of using make
+
 ## v1.0.2
 
 - Extension icon
