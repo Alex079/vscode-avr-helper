@@ -1,8 +1,8 @@
-import * as C from '../utils/Conf';
 import { commands, StatusBarItem, Uri, window } from 'vscode';
-import { performBuildTask, performFlashTask } from './Runner';
-import { setupDevice, setupProgrammer, setupTools } from './SetupTools';
+import * as C from '../utils/Conf';
 import { getContext } from '../utils/Context';
+import { performBuildTask, performFlashTask } from '../actions/Runner';
+import { setupDevice, setupProgrammer, setupTools } from '../actions/SetupTools';
 
 const items: { [key: string]: StatusBarItem } = {};
 

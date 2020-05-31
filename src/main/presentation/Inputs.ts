@@ -16,14 +16,12 @@ export async function pickFolder(): Promise<WorkspaceFolder> {
       case 1: return folders[0];
       default: return window
         .showWorkspaceFolderPick({ ignoreFocusOut: true })
-        .then(folder =>
-          {
-            if (!folder) {
-              throw new Error('Interrupted');
-            }
-            return folder;
+        .then(folder => {
+          if (!folder) {
+            throw new Error('Interrupted');
           }
-        );
+          return folder;
+        });
     }
   }
   throw new Error('No folder');

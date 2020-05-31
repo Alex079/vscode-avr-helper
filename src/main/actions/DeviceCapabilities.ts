@@ -1,40 +1,5 @@
 import { Uri } from 'vscode';
-import * as C from '../utils/Conf';
-import { spawnSync } from 'child_process';
-
-async function getDeviceInfo(uri: Uri): Promise<string> {
-  const exe: string | undefined = C.PROGRAMMER.get(uri);
-  const progType: string | undefined = C.PROG_TYPE.get(uri);
-  const devType: string | undefined = C.DEVICE_TYPE.get(uri);
-  if (!exe || !progType || ! devType) {
-    return '';
-  }
-  const args: string[] = [
-    '-v',
-    '-p', devType,
-    '-c', progType
-  ];
-  const defs: string | undefined = C.PROG_DEFS.get(uri);
-  if (defs) {
-    args.push('-C', defs);
-  }
-  const port: string | undefined = C.PROG_PORT.get(uri);
-  if (port) {
-    args.push('-P', port);
-  }
-  const rate: number | undefined = C.PROG_RATE.get(uri);
-  if (rate) {
-    args.push('-b', `${rate}`);
-  }
-  const info = spawnSync(exe, args, { cwd: uri.fsPath });
-  if (info.error) {
-    throw new Error(info.error.message);
-  }
-  if (info.status && info.status > 0) {
-    throw new Error(info.stderr.toString());
-  }
-  return info.stderr.toString();
-}
+import { getDeviceInfo } from './Runner';
 
 export async function getDeviceMemoryAreas(uri: Uri): Promise<string[]> {
   return getDeviceInfo(uri)

@@ -1,9 +1,10 @@
-import { pickFolder, pickMany, pickOne } from "./Inputs";
-import { QuickPickItem, ShellExecution, Task, tasks, window, WorkspaceFolder } from "vscode";
-import { getMakeTargets, getOutput } from "../utils/Files";
-import { getDeviceMemoryAreas } from './DeviceCapabilities';
 import { promises as fs } from 'fs';
+import { spawnSync } from "child_process";
+import { QuickPickItem, ShellExecution, Task, tasks, Uri, window, WorkspaceFolder } from "vscode";
 import * as C from '../utils/Conf';
+import { getMakeTargets, getOutput } from "../utils/Files";
+import { pickFolder, pickMany, pickOne } from "../presentation/Inputs";
+import { getDeviceMemoryAreas } from './DeviceCapabilities';
 
 const GOALS: string[] = ['build', 'clean', 'scan'];
 const ERASE: string = '(erase chip)';
@@ -73,4 +74,55 @@ export async function performFlashTask(): Promise<void> {
       })
       .catch((reason) => window.showErrorMessage(reason.toString()));
   });
+}
+
+export async function getList(uri: Uri, kind: string): Promise<string> {
+  const exe: string | undefined = C.PROGRAMMER.get(uri);
+  if (!exe) {
+    return '';
+  }
+  const args: string[] = [kind];
+  const defs: string | undefined = C.PROG_DEFS.get(uri);
+  if (defs) {
+    args.push('-C', defs);
+  }
+  const info = spawnSync(exe, args, { cwd: uri.fsPath });
+  if (info.error) {
+    throw new Error(info.error.message);
+  }
+  return info.stderr.toString();
+}
+
+export async function getDeviceInfo(uri: Uri): Promise<string> {
+  const exe: string | undefined = C.PROGRAMMER.get(uri);
+  const progType: string | undefined = C.PROG_TYPE.get(uri);
+  const devType: string | undefined = C.DEVICE_TYPE.get(uri);
+  if (!exe || !progType || ! devType) {
+    return '';
+  }
+  const args: string[] = [
+    '-v',
+    '-p', devType,
+    '-c', progType
+  ];
+  const defs: string | undefined = C.PROG_DEFS.get(uri);
+  if (defs) {
+    args.push('-C', defs);
+  }
+  const port: string | undefined = C.PROG_PORT.get(uri);
+  if (port) {
+    args.push('-P', port);
+  }
+  const rate: number | undefined = C.PROG_RATE.get(uri);
+  if (rate) {
+    args.push('-b', `${rate}`);
+  }
+  const info = spawnSync(exe, args, { cwd: uri.fsPath });
+  if (info.error) {
+    throw new Error(info.error.message);
+  }
+  if (info.status && info.status > 0) {
+    throw new Error(info.stderr.toString());
+  }
+  return info.stderr.toString();
 }

@@ -1,7 +1,7 @@
 import { ExtensionContext, window, workspace } from 'vscode';
 import { onChangeActiveTextEditor, onChangeConfiguration, onChangeWorkspaceFolder } from './listeners/OnChange';
 import { setContext } from './utils/Context';
-import { showSetupToolsItem } from './actions/StatusBar';
+import { showSetupToolsItem } from './presentation/StatusBar';
 
 export function activate(context: ExtensionContext): void {
   setContext(context);

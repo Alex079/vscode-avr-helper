@@ -1,7 +1,7 @@
+import { ConfigurationChangeEvent, Uri, window, workspace } from 'vscode';
 import * as C from '../utils/Conf';
 import { propagateSettings } from '../actions/Propagator';
-import { ConfigurationChangeEvent, Uri, window, workspace } from 'vscode';
-import { updateBuildItem, updateFlashItem, updateSetupDeviceItem, updateSetupProgrammerItem } from '../actions/StatusBar';
+import { updateBuildItem, updateFlashItem, updateSetupDeviceItem, updateSetupProgrammerItem } from '../presentation/StatusBar';
 
 export async function onChangeConfiguration(event: ConfigurationChangeEvent): Promise<any> {
   if (!workspace.workspaceFolders) {

@@ -1,27 +1,17 @@
 import { promises as fs } from 'fs';
-import { Uri, WorkspaceFolder } from 'vscode';
+import { QuickPickItem, Uri } from 'vscode';
 import * as C from '../utils/Conf';
 import { getCCppProps, getDefaultMakeTargets, getMakeProps, getMakeTargets } from '../utils/Files';
 import { parseProperties } from '../utils/Properties';
-import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from './Inputs';
+import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from '../presentation/Inputs';
 import { propagateSettings } from './Propagator';
-import { spawnSync } from 'child_process';
+import { getList } from './Runner';
 
-function listTypes(folder: WorkspaceFolder, of: string): [string, string][] {
-  const exe: string | undefined = C.PROGRAMMER.get(folder.uri);
-  if (!exe) {
-    return [];
-  }
-  const args: string[] = [of];
-  const defs: string | undefined = C.PROG_DEFS.get(folder.uri);
-  if (defs) {
-    args.push('-C', defs);
-  }
-  const info = spawnSync(exe, args, { cwd: folder.uri.fsPath });
-  if (info.error) {
-    throw new Error(info.error.message);
-  }
-  return Object.entries(parseProperties(info.stderr.toString()));
+async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
+  return getList(uri, kind)
+    .then(parseProperties)
+    .then(properties => Object.entries<string>(properties))
+    .then(properties => properties.map(([id, name]) => ({ label: (name ? name : id), description: (id) })));
 }
 
 export async function setupTools(): Promise<void> {
@@ -45,8 +35,7 @@ export async function setupTools(): Promise<void> {
 
 export async function setupDevice(): Promise<void> {
   const folder = await pickFolder();
-  const devTypes = listTypes(folder, '-p?')
-    .map(([id, name]) => ({ label: (name ? name : id), description: (id) }));
+  const devTypes = await listTypes(folder.uri, '-p?');
 
   pickOne('Device type', devTypes, item => item.label.toLowerCase() === C.DEVICE_TYPE.get(folder.uri), 1, 2)
     .then(newDevType => newDevType.label.toLowerCase())
@@ -58,8 +47,7 @@ export async function setupDevice(): Promise<void> {
 
 export async function setupProgrammer(): Promise<void> {
   const folder = await pickFolder();
-  const progTypes = listTypes(folder, '-c?')
-    .map(([id, name]) => ({ label: (name ? name : id), description: (id) }));
+  const progTypes = await listTypes(folder.uri, '-c?');
 
   pickOne('Programmer type', progTypes, item => item.description?.toLowerCase() === C.PROG_TYPE.get(folder.uri), 1, 3)
     .then(newProgType => newProgType.description?.toLowerCase())
