@@ -55,7 +55,10 @@
 						"description": "MCU type"
 					},
 					"AVR.device.frequency": {
-						"type": ["integer", "null"],
+						"type": [
+							"integer",
+							"null"
+						],
 						"default": null,
 						"scope": "resource",
 						"description": "MCU frequency"
@@ -85,7 +88,10 @@
 						"description": "Programmer upload port"
 					},
 					"AVR.programmer.rate": {
-						"type": ["integer", "null"],
+						"type": [
+							"integer",
+							"null"
+						],
 						"default": null,
 						"scope": "resource",
 						"description": "Programmer upload rate"
