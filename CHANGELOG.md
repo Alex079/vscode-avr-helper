@@ -1,6 +1,7 @@
 ## v1.1.0
 
 - Call programmer directly instead of using make
+- Fix configuration defaults
 
 ## v1.0.2
 
