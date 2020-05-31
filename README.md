@@ -47,11 +47,13 @@ This item triggers make of a currently open folder or a folder of currently disp
 - clean: remove the build output
 - scan: list all C/C++ files which will be used for build
 
+The result of build is `output.elf` and `output.lst` files in `.vscode/avr.build` folder.
+
 ### Status bar: Flash (command: Flash)
 
 Displayed as `Flash`
 
-This item triggers a connection to the device using the programmer to list all available memory areas of the currently connected device. The user can select memory areas to flash, these areas must be present in ELF file sections for the operation to succeed. The build is triggered automatically if needed before flashing.
+This item triggers a connection to the device using the programmer to list all available memory areas of the currently connected device. The user can select memory areas to flash, these areas must be present in `output.elf` file sections for the operation to succeed. The build has to be run successfully and produce `output.elf` file before flashing.
 
 ## Requirements
 
