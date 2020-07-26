@@ -1,3 +1,7 @@
+## v1.1.1
+
+- Set activation event
+
 ## v1.1.0
 
 - Call programmer directly instead of using make
