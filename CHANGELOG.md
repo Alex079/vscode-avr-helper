@@ -1,3 +1,7 @@
+## v1.1.2
+
+- Remove explicit dependency on bundled cpptools
+
 ## v1.1.1
 
 - Set activation event

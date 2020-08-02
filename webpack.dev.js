@@ -2,7 +2,7 @@
 
 'use strict';
 
-module.exports = require('webpack-merge')(require('./webpack.config'),
+module.exports = require('webpack-merge').merge(require('./webpack.config'),
   /**@type {import('webpack').Configuration}*/
   {
     mode: "development",
