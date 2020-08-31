@@ -17,9 +17,9 @@
 		"url": "https://github.com/Alex079/vscode-avr-helper"
 	},
 	"publisher": "Alex079",
-	"version": "1.1.2",
+	"version": "1.1.3",
 	"engines": {
-		"vscode": "^1.47.3"
+		"vscode": "^1.48.2"
 	},
 	"categories": [
 		"Other"
@@ -143,8 +143,8 @@
 		"@types/mocha": "^8",
 		"@types/node": "^13",
 		"@types/vscode": "^1",
-		"@typescript-eslint/eslint-plugin": "^3",
-		"@typescript-eslint/parser": "^3",
+		"@typescript-eslint/eslint-plugin": "^4",
+		"@typescript-eslint/parser": "^4",
 		"chai": "^4",
 		"eslint": "^7",
 		"glob": "^7",
