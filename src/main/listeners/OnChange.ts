@@ -7,6 +7,7 @@ export async function onChangeConfiguration(event: ConfigurationChangeEvent): Pr
   if (!workspace.workspaceFolders) {
     return;
   }
+  updateStatusBar();
   workspace.workspaceFolders.forEach(folder => {
     const uri = folder.uri;
     if (event.affectsConfiguration(C.COMPILER.name(), uri) ||
@@ -14,7 +15,6 @@ export async function onChangeConfiguration(event: ConfigurationChangeEvent): Pr
         event.affectsConfiguration(C.DEVICE_TYPE.name(), uri) ||
         event.affectsConfiguration(C.DEVICE_FREQ.name(), uri)) {
       return propagateSettings(uri)
-        .then(updateStatusBar)
         .catch((reason) => window.showErrorMessage(reason.toString()));
     }
     return;
