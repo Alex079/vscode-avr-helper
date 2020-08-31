@@ -26,7 +26,8 @@ export async function performBuildTask(): Promise<void> {
           )
         )
       )
-  );
+  )
+  .catch(console.trace);
 }
 
 export async function performFlashTask(): Promise<void> {
@@ -73,7 +74,8 @@ export async function performFlashTask(): Promise<void> {
         );
       })
       .catch((reason) => window.showErrorMessage(reason.toString()));
-  });
+  })
+  .catch(console.trace);
 }
 
 export async function getList(uri: Uri, kind: string): Promise<string> {
