@@ -1,3 +1,9 @@
+## v1.1.3
+
+- Fix status bar update
+- Fix error handling
+- Speed-up build
+
 ## v1.1.2
 
 - Remove explicit dependency on bundled cpptools
