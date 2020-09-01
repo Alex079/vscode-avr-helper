@@ -78,6 +78,10 @@ This extension contributes the following settings:
 |`AVR.programmer.port`|`/dev/ttyACM0`|
 |`AVR.programmer.rate`|`19200`|
 
+## How to
+
+[Update build system](https://github.com/Alex079/vscode-avr-helper/wiki/Update-build-system)
+
 ## Known Issues
 
 Debug and simulation modes are not implemented
