@@ -29,7 +29,7 @@ export async function pickFolder(): Promise<WorkspaceFolder> {
 
 export async function pickFile(placeholder: string, value: string | undefined,
                       required: boolean, includeFiles: boolean, includeFolders: boolean,
-                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<string> {
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<string | undefined> {
   const input = window.createInputBox();
   if (value) {
     input.value = value;
@@ -40,7 +40,7 @@ export async function pickFile(placeholder: string, value: string | undefined,
   input.totalSteps = totalSteps;
   input.buttons = [{ iconPath: getPlusIcon() }];
   const disposables: Disposable[] = [];
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<string | undefined>((resolve, reject) => {
     disposables.push(
       input.onDidHide(() => reject('Interrupted')),
       input.onDidAccept(() => {
@@ -150,7 +150,7 @@ export async function pickFiles(placeholder: string, value: string[] | undefined
 }
 
 export async function pickNumber(placeholder: string, value: number | undefined, required: boolean,
-                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<number> {
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<number | undefined> {
   const input = window.createInputBox();
   if (value) {
     input.value = value.toString();
@@ -160,7 +160,7 @@ export async function pickNumber(placeholder: string, value: number | undefined,
   input.totalSteps = totalSteps;
   input.placeholder = placeholder;
   const disposables: Disposable[] = [];
-  return new Promise<number>((resolve, reject) => {
+  return new Promise<number | undefined>((resolve, reject) => {
     disposables.push(
       input.onDidHide(() => reject('Interrupted')),
       input.onDidAccept(() => {
@@ -186,7 +186,7 @@ export async function pickNumber(placeholder: string, value: number | undefined,
 }
 
 export async function pickString(placeholder: string, value: string | undefined, required: boolean,
-                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<string> {
+                      step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<string | undefined> {
   const input = window.createInputBox();
   if (value) {
     input.value = value.toString();
@@ -196,7 +196,7 @@ export async function pickString(placeholder: string, value: string | undefined,
   input.totalSteps = totalSteps;
   input.placeholder = placeholder;
   const disposables: Disposable[] = [];
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<string | undefined>((resolve, reject) => {
     disposables.push(
       input.onDidHide(() => reject('Interrupted')),
       input.onDidAccept(() => {
