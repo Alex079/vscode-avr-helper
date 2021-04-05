@@ -18,11 +18,11 @@ E.make.list := $(A.compiler.dir)avr-objdump --disassemble --source --line-number
 E.get.size := $(A.compiler.dir)avr-size -A
 
 F.dep.base = $(basename $1 $(filter %.h %.hpp,$(shell $(E.get.dep) $1)))
-F.dep.1lvl = $(sort $(wildcard $(addsuffix .c*,$(call F.dep.base,$1)) $(addsuffix .C,$(call F.dep.base,$1))))
+F.dep.1lvl = $(sort $(wildcard $(addsuffix .c,$(call F.dep.base,$1)) $(addsuffix .cc,$(call F.dep.base,$1)) $(addsuffix .cpp,$(call F.dep.base,$1)) $(addsuffix .c++,$(call F.dep.base,$1)) $(addsuffix .C,$(call F.dep.base,$1))))
 F.dep = $(if $(filter-out $1,$(call F.dep.1lvl,$1)),$(call F.dep,$(call F.dep.1lvl,$1)),$1)
 
-A.src := $(call F.dep,$(sort $(wildcard *.c*) $(wildcard */*.c*) $(wildcard */*/*.c*) $(wildcard *.C) $(wildcard */*.C) $(wildcard */*/*.C)))
-A.obj := $(addprefix $(A.output.dir)/obj/,$(addsuffix .o,$(basename $(A.src))))
+A.src := $(call F.dep,$(sort $(wildcard *.c) $(wildcard */*.c) $(wildcard */*/*.c) $(sort $(wildcard *.cc) $(wildcard */*.cc) $(wildcard */*/*.cc) $(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard */*/*.cpp) $(wildcard *.c++) $(wildcard */*.c++) $(wildcard */*/*.c++) $(wildcard *.C) $(wildcard */*.C) $(wildcard */*/*.C))))
+A.obj := $(addprefix $(A.output.dir)/obj/,$(addsuffix .o,$(A.src)))
 
 .PHONY : clean build scan
 
@@ -52,13 +52,31 @@ $(A.elf) : $(A.obj)
 	@$(E.link) $^ -o $@
 	$(info )
 
-$(A.output.dir)/obj/%.o : %.c*
+$(A.output.dir)/obj/%.c.o : %.c
 	@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
-$(A.output.dir)/obj/%.o : %.C
+$(A.output.dir)/obj/%.cc.o : %.cc
+	@mkdir -p $(@D)
+	$(info ===== Making $@)
+	@$(E.compile) $< -o $@
+	$(info )
+
+$(A.output.dir)/obj/%.cpp.o : %.cpp
+	@mkdir -p $(@D)
+	$(info ===== Making $@)
+	@$(E.compile) $< -o $@
+	$(info )
+
+$(A.output.dir)/obj/%.c++.o : %.c++
+	@mkdir -p $(@D)
+	$(info ===== Making $@)
+	@$(E.compile) $< -o $@
+	$(info )
+
+$(A.output.dir)/obj/%.C.o : %.C
 	@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
