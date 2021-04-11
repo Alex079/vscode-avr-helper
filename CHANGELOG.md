@@ -1,3 +1,7 @@
+## v1.1.4
+
+- Fix source files detection
+
 ## v1.1.3
 
 - Fix status bar update
