@@ -1,3 +1,8 @@
+## v1.1.5
+
+- Fix mkdir and rm for Windows 10
+- Fix source wildcards
+
 ## v1.1.4
 
 - Fix source files detection
