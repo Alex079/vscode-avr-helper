@@ -21,7 +21,7 @@ F.dep.base = $(basename $1 $(filter %.h %.hpp,$(shell $(E.get.dep) $1)))
 F.dep.1lvl = $(sort $(wildcard $(addsuffix .c,$(call F.dep.base,$1)) $(addsuffix .cc,$(call F.dep.base,$1)) $(addsuffix .cpp,$(call F.dep.base,$1)) $(addsuffix .c++,$(call F.dep.base,$1)) $(addsuffix .C,$(call F.dep.base,$1))))
 F.dep = $(if $(filter-out $1,$(call F.dep.1lvl,$1)),$(call F.dep,$(call F.dep.1lvl,$1)),$1)
 
-A.src := $(call F.dep,$(sort $(wildcard *.c) $(wildcard */*.c) $(wildcard */*/*.c) $(sort $(wildcard *.cc) $(wildcard */*.cc) $(wildcard */*/*.cc) $(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard */*/*.cpp) $(wildcard *.c++) $(wildcard */*.c++) $(wildcard */*/*.c++) $(wildcard *.C) $(wildcard */*.C) $(wildcard */*/*.C))))
+A.src := $(call F.dep,$(sort $(wildcard *.c */*.c */*/*.c *.cc */*.cc */*/*.cc *.cpp */*.cpp */*/*.cpp *.c++ */*.c++ */*/*.c++ *.C */*.C */*/*.C)))
 A.obj := $(addprefix $(A.output.dir)/obj/,$(addsuffix .o,$(A.src)))
 
 .PHONY : clean build scan
@@ -30,7 +30,7 @@ build : $(A.list)
 	@$(E.get.size) $(A.elf)
 
 clean :
-	@$(RM) -r $(A.output.dir)
+	-@rm -fr $(A.output.dir)
 
 scan :
 	$(info Found source files)
@@ -41,43 +41,43 @@ scan :
 -include $(A.obj:.o=.d)
 
 $(A.list) : $(A.elf)
-	@mkdir -p $(@D)
+	-@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.make.list) $^ > $@
 	$(info )
 
 $(A.elf) : $(A.obj)
-	@mkdir -p $(@D)
+	-@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.link) $^ -o $@
 	$(info )
 
 $(A.output.dir)/obj/%.c.o : %.c
-	@mkdir -p $(@D)
+	-@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
 $(A.output.dir)/obj/%.cc.o : %.cc
-	@mkdir -p $(@D)
+	-@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
 $(A.output.dir)/obj/%.cpp.o : %.cpp
-	@mkdir -p $(@D)
+	-@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
 $(A.output.dir)/obj/%.c++.o : %.c++
-	@mkdir -p $(@D)
+	-@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
 $(A.output.dir)/obj/%.C.o : %.C
-	@mkdir -p $(@D)
+	-@mkdir -p $(@D)
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )

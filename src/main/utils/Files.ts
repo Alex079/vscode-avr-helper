@@ -1,5 +1,6 @@
 import { Uri } from 'vscode';
 import { join } from 'path';
+import { platform } from 'os';
 import { getContext } from './Context';
 
 const OUTPUT: string = join('.vscode', 'avr.build', 'output.elf');
@@ -8,7 +9,7 @@ const MAKE_PROPS: string = join('.vscode', 'avr.properties.mk');
 const MAKE_TARGETS: string = join('.vscode', 'avr.targets.mk');
 const PLUS_LIGHT = join('resources', 'plus-light.svg');
 const PLUS_DARK = join('resources', 'plus-dark.svg');
-const DEFAULT_MAKE_TARGETS: string = join('resources', 'avr.targets.mk');
+const DEFAULT_MAKE_TARGETS: string = join('resources', (platform() === 'win32' ? 'windows' : 'default'), 'avr.targets.mk');
 
 export const getOutput = (folder: string) => join(folder, OUTPUT);
 export const getCCppProps = (folder: string) => join(folder, C_CPP_PROPS);
