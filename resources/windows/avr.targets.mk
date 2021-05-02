@@ -1,14 +1,14 @@
--include .vscode\avr.properties.mk
+-include .vscode/avr.properties.mk
 
 ifeq ($(AVR.source.compiler),$(notdir $(AVR.source.compiler)))
 A.compiler.dir :=
 else
 A.compiler.dir := $(dir $(AVR.source.compiler))
 endif
-A.libraries := $(addprefix -I,$(wildcard $(AVR.source.libraries:=\.) $(AVR.source.libraries:=\*\.) $(AVR.source.libraries:=\*\*\.)))
-A.output.dir := .vscode\avr.build
-A.elf := $(A.output.dir)\output.elf
-A.list := $(A.output.dir)\output.lst
+A.libraries := $(addprefix -I,$(wildcard $(AVR.source.libraries:=/.) $(AVR.source.libraries:=/*/.) $(AVR.source.libraries:=/*/*/.)))
+A.output.dir := .vscode/avr.build
+A.elf := $(A.output.dir)/output.elf
+A.list := $(A.output.dir)/output.lst
 
 E.compiler := $(AVR.source.compiler) -DF_CPU=$(AVR.device.frequency) -mmcu=$(AVR.device.type) -pipe $(A.libraries)
 E.get.dep := $(E.compiler) -MM
@@ -21,8 +21,8 @@ F.dep.base = $(basename $1 $(filter %.h %.hpp,$(shell $(E.get.dep) $1)))
 F.dep.1lvl = $(sort $(wildcard $(addsuffix .c,$(call F.dep.base,$1)) $(addsuffix .cc,$(call F.dep.base,$1)) $(addsuffix .cpp,$(call F.dep.base,$1)) $(addsuffix .c++,$(call F.dep.base,$1)) $(addsuffix .C,$(call F.dep.base,$1))))
 F.dep = $(if $(filter-out $1,$(call F.dep.1lvl,$1)),$(call F.dep,$(call F.dep.1lvl,$1)),$1)
 
-A.src := $(call F.dep,$(sort $(wildcard *.c *\*.c *\*\*.c *.cc *\*.cc *\*\*.cc *.cpp *\*.cpp *\*\*.cpp *.c++ *\*.c++ *\*\*.c++ *.C *\*.C *\*\*.C)))
-A.obj := $(addprefix $(A.output.dir)\obj\,$(addsuffix .o,$(A.src)))
+A.src := $(call F.dep,$(sort $(wildcard *.c */*.c */*/*.c *.cc */*.cc */*/*.cc *.cpp */*.cpp */*/*.cpp *.c++ */*.c++ */*/*.c++ *.C */*.C */*/*.C)))
+A.obj := $(addprefix $(A.output.dir)/obj/,$(addsuffix .o,$(A.src)))
 
 .PHONY : clean build scan
 
@@ -41,43 +41,43 @@ scan :
 -include $(A.obj:.o=.d)
 
 $(A.list) : $(A.elf)
-	-@mkdir $(@D)
+	-@mkdir $(subst /,\,$(@D))
 	$(info ===== Making $@)
 	@$(E.make.list) $^ > $@
 	$(info )
 
 $(A.elf) : $(A.obj)
-	-@mkdir $(@D)
+	-@mkdir $(subst /,\,$(@D))
 	$(info ===== Making $@)
 	@$(E.link) $^ -o $@
 	$(info )
 
-$(A.output.dir)\obj\%.c.o : %.c
-	-@mkdir $(@D)
+$(A.output.dir)/obj/%.c.o : %.c
+	-@mkdir $(subst /,\,$(@D))
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
-$(A.output.dir)\obj\%.cc.o : %.cc
-	-@mkdir $(@D)
+$(A.output.dir)/obj/%.cc.o : %.cc
+	-@mkdir $(subst /,\,$(@D))
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
-$(A.output.dir)\obj\%.cpp.o : %.cpp
-	-@mkdir $(@D)
+$(A.output.dir)/obj/%.cpp.o : %.cpp
+	-@mkdir $(subst /,\,$(@D))
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
-$(A.output.dir)\obj\%.c++.o : %.c++
-	-@mkdir $(@D)
+$(A.output.dir)/obj/%.c++.o : %.c++
+	-@mkdir $(subst /,\,$(@D))
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
 
-$(A.output.dir)\obj\%.C.o : %.C
-	-@mkdir $(@D)
+$(A.output.dir)/obj/%.C.o : %.C
+	-@mkdir $(subst /,\,$(@D))
 	$(info ===== Making $@)
 	@$(E.compile) $< -o $@
 	$(info )
