@@ -30,7 +30,9 @@ build : $(A.list)
 	@$(E.get.size) $(A.elf)
 
 clean :
-	-@rm -Force -r $(A.output.dir)
+	$(info ===== Cleaning)
+	-@rmdir /s /q $(subst /,\,$(A.output.dir))
+	$(info )
 
 scan :
 	$(info Found source files)
