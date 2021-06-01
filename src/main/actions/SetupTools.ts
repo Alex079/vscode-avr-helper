@@ -1,14 +1,14 @@
 import { promises as fs } from 'fs';
 import { QuickPickItem, Uri } from 'vscode';
 import * as C from '../utils/Conf';
-import { getCCppProps, getDefaultMakeTargets, getMakeProps, getMakeTargets } from '../utils/Files';
+import { getCCppProps } from '../utils/Files';
 import { parseProperties } from '../utils/Properties';
 import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from '../presentation/Inputs';
 import { propagateSettings } from './Propagator';
-import { getList } from './Runner';
+import { getProperties } from './ToolsCapabilities';
 
 async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
-  return getList(uri, kind)
+  return getProperties(uri, kind)
     .then(parseProperties)
     .then(properties => Object.entries<string>(properties))
     .then(properties => properties.map(([id, name]) => ({ label: (name ? name : id), description: (id) })));
@@ -17,7 +17,7 @@ async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
 export async function setupTools(): Promise<void> {
   const uri = (await pickFolder()).uri;
 
-  prepareBuildFiles(uri)
+  prepareConfigFiles(uri)
     .then(() => pickFile('Full path to compiler executable', C.COMPILER.get(uri), true, true, false, 1, 4))
     .then(newCompiler => C.COMPILER.set(uri, newCompiler))
 
@@ -59,11 +59,7 @@ export async function setupProgrammer(): Promise<void> {
     .catch(console.trace);
 }
 
-async function prepareBuildFiles(uri: Uri): Promise<void> {
-  fs
-    .stat(getMakeProps(uri.fsPath))
-    .then(() => fs.stat(getCCppProps(uri.fsPath)))
-    .then(() => {}, () => propagateSettings(uri))
-    .then(() => fs.stat(getMakeTargets(uri.fsPath)))
-    .then(() => {}, () => fs.copyFile(getDefaultMakeTargets(), getMakeTargets(uri.fsPath)));
+async function prepareConfigFiles(uri: Uri): Promise<void> {
+  fs.stat(getCCppProps(uri.fsPath))
+    .catch(() => propagateSettings(uri));
 }

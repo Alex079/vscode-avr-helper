@@ -3,7 +3,7 @@ import * as C from '../utils/Conf';
 import { propagateSettings } from '../actions/Propagator';
 import { updateBuildItem, updateFlashItem, updateSetupDeviceItem, updateSetupProgrammerItem } from '../presentation/StatusBar';
 
-export async function onChangeConfiguration(event: ConfigurationChangeEvent): Promise<any> {
+export function onChangeConfiguration(event: ConfigurationChangeEvent): void {
   if (!workspace.workspaceFolders) {
     return;
   }
@@ -14,10 +14,9 @@ export async function onChangeConfiguration(event: ConfigurationChangeEvent): Pr
         event.affectsConfiguration(C.LIBRARIES.name(), uri) ||
         event.affectsConfiguration(C.DEVICE_TYPE.name(), uri) ||
         event.affectsConfiguration(C.DEVICE_FREQ.name(), uri)) {
-      return propagateSettings(uri)
-        .catch((reason) => window.showErrorMessage(reason.toString()));
+      propagateSettings(uri)
+        .catch(reason => window.showErrorMessage(reason.toString()));
     }
-    return;
   });
 }
 
@@ -46,10 +45,6 @@ function updateStatusBar(): void {
   updateFlashItem(uri);
 }
 
-export async function onChangeWorkspaceFolder(): Promise<any> {
-  updateStatusBar();
-}
+export const onChangeWorkspaceFolder = updateStatusBar;
 
-export async function onChangeActiveTextEditor(): Promise<any> {
-  updateStatusBar();
-}
+export const onChangeActiveTextEditor = updateStatusBar;
