@@ -5,7 +5,7 @@ import * as C from '../utils/Conf';
 import { getOutputElf, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
 import { pickFolder, pickOne } from "../presentation/Inputs";
 import { fdir } from "fdir";
-import { dirname, join } from 'path';
+import { dirname, join, normalize } from 'path';
 
 const GOALS: string[] = ['build', 'clean', 'scan'];
 
@@ -105,10 +105,11 @@ function getDependencies(uri: Uri) {
       }
       const newResult = info.stdout.toString()
         .replace(/\\ /g, '\u0000')
-        .replace(/\\\n/g, ' ')
+        .replace(/\\[\r\n]+/g, ' ')
+        .replace(/\\:/g, ':')
         .trim()
         .split(/\s+/)
-        .map(i => i.replace(/\u0000/g, ' '));
+        .map(i => normalize(i.replace(/\u0000/g, ' ')));
       result.push(...newResult);
       const newBaseNames = [...new Set(newResult.filter(v => /.*\.h(|h|pp|xx|\+\+)$/i.test(v)).map(v => v.replace(/\.h(|h|pp|xx|\+\+)$/i, '')))];
       const previouslyUnsed = unused;
