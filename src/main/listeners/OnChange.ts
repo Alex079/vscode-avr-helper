@@ -11,6 +11,8 @@ export function onChangeConfiguration(event: ConfigurationChangeEvent): void {
   workspace.workspaceFolders.forEach(folder => {
     const uri = folder.uri;
     if (event.affectsConfiguration(C.COMPILER.name(), uri) ||
+        event.affectsConfiguration(C.C_STD.name(), uri) ||
+        event.affectsConfiguration(C.CPP_STD.name(), uri) ||
         event.affectsConfiguration(C.LIBRARIES.name(), uri) ||
         event.affectsConfiguration(C.DEVICE_TYPE.name(), uri) ||
         event.affectsConfiguration(C.DEVICE_FREQ.name(), uri)) {

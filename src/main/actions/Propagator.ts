@@ -5,6 +5,7 @@ import * as C from '../utils/Conf';
 import { getCCppProps } from '../utils/Files';
 
 const avrFilter = (c: any) => c.name === 'AVR';
+const DEFAULT = '${default}';
 
 async function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): Promise<void> {
   const name = getCCppProps(folder.fsPath);
@@ -22,9 +23,7 @@ async function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): 
       if (properties.configurations.filter(avrFilter).length === 0) {
         properties.configurations.push({
           name: 'AVR',
-          intelliSenseMode: '${default}',
-          cStandard: 'c11',
-          cppStandard: 'c++14'
+          intelliSenseMode: DEFAULT
         });
       }
       properties.configurations.filter(avrFilter).forEach(mutator);
@@ -35,11 +34,23 @@ async function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): 
 
 export function propagateSettings(uri: Uri): Promise<void> {
   const compiler: string | undefined = C.COMPILER.get(uri);
+  const cStandard: string | undefined = C.C_STD.get(uri);
+  const cppStandard: string | undefined = C.CPP_STD.get(uri);
   const libraries: string[] = C.LIBRARIES.get(uri) ?? [];
   const deviceType: string | undefined = C.DEVICE_TYPE.get(uri);
   const deviceFreq: number | undefined = C.DEVICE_FREQ.get(uri);
   return mutateCCppProperties(uri, conf => {
     conf.compilerPath = compiler ?? '';
+    if (cStandard) {
+      conf.cStandard = cStandard;
+    } else {
+      conf.cStandard = DEFAULT;
+    }
+    if (cppStandard) {
+      conf.cppStandard = cppStandard;
+    }else {
+      conf.cppStandard = DEFAULT;
+    }
     conf.includePath = libraries.map(lib => join(lib, '**'));
     const newArgs = conf.compilerArgs
       ? conf.compilerArgs.filter((v: string) => !v.startsWith('-mmcu=') && !v.startsWith('-DF_CPU='))

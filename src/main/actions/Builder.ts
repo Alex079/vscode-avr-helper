@@ -9,17 +9,25 @@ import { dirname, join, normalize } from 'path';
 
 const GOALS: string[] = ['build', 'clean', 'scan'];
 
+const ANY_HEADER = /\.h(|h|pp|xx|\+\+)$/i;
+const ANY_SOURCE = /\.c(|c|pp|xx|\+\+)$/i;
+
 const toItem = (i: string): QuickPickItem => ({ label: i });
 const fromItem = (i: QuickPickItem): string => i.label;
+const hidden = (i: string) => i.startsWith('.');
 
-const SRC_CRAWLER = new fdir().withBasePath().withFullPaths().exclude(d => d.startsWith('.')).filter((f: string) => /.*\.c(|c|pp|xx|\+\+)$/i.test(f)).withMaxDepth(2);
-async function crawlSrc(dir: string) {
-  return SRC_CRAWLER.crawl(dir).withPromise() as Promise<string[]>;
+const SRC_CRAWLER = new fdir().withBasePath().withFullPaths().exclude(hidden).filter((f: string) => ANY_SOURCE.test(f));
+function crawlSrc(uri: Uri) {
+  return (dir: string) => {
+    return SRC_CRAWLER.withMaxDepth(C.MAX_DEPTH.get(uri) || 0).crawl(dir).withPromise() as Promise<string[]>;
+  }
 }
 
-const LIB_CRAWLER = new fdir().onlyDirs().withBasePath().withFullPaths().exclude(d => d.startsWith('.')).withMaxDepth(2);
-async function crawlLib(dir: string) {
-  return LIB_CRAWLER.crawl(dir).withPromise() as Promise<string[]>;
+const LIB_CRAWLER = new fdir().withBasePath().withFullPaths().exclude(hidden).onlyDirs();
+function crawlLib(uri: Uri) {
+  return (dir: string) => {
+    return LIB_CRAWLER.withMaxDepth(C.MAX_DEPTH.get(uri) || 0).crawl(dir).withPromise() as Promise<string[]>;
+  }
 }
 
 interface FileTime {
@@ -70,7 +78,7 @@ const dispatch = (uri: Uri) => async (goal: string): Promise<void> => {
 
 async function getSources(uri: Uri): Promise<Sources> {
   const extLibraries: string[] = C.LIBRARIES.get(uri) ?? [];
-  return Promise.all([crawlSrc(uri.fsPath), Promise.all(extLibraries.map(crawlSrc)).then(paths => paths.flat())])
+  return Promise.all([crawlSrc(uri)(uri.fsPath), Promise.all(extLibraries.map(crawlSrc(uri))).then(paths => paths.flat())])
     .then(([thisFolder, extFolders]): Sources => ({ thisFolder, extFolders }));
 }
 
@@ -89,7 +97,7 @@ function getDependencies(uri: Uri) {
     ];
     const libs: string[] | undefined = C.LIBRARIES.get(uri);
     if (libs) {
-      args.push(...(await Promise.all(libs.map(crawlLib))).flat().map(lib => `-I${lib}`));
+      args.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
     }
     let toBeChecked: string[] = src.thisFolder;
     let unused: string[] = src.extFolders;
@@ -111,7 +119,7 @@ function getDependencies(uri: Uri) {
         .split(/\s+/)
         .map(i => normalize(i.replace(/\u0000/g, ' ')));
       result.push(...newResult);
-      const newBaseNames = [...new Set(newResult.filter(v => /.*\.h(|h|pp|xx|\+\+)$/i.test(v)).map(v => v.replace(/\.h(|h|pp|xx|\+\+)$/i, '')))];
+      const newBaseNames = [...new Set(newResult.filter(v => ANY_HEADER.test(v)).map(v => v.replace(ANY_HEADER, '')))];
       const previouslyUnsed = unused;
       toBeChecked = [];
       unused = [];
@@ -181,31 +189,25 @@ function compile(uri: Uri) {
     if (!exe || !devType || !devFrequency) {
       return;
     }
-    const compilerArgs: string[] = [
-      '-std=c++14',
-      '-g','-Os','-Wall','-Wextra','-pedantic','-c','-fpermissive','-fno-exceptions','-ffunction-sections','-fdata-sections','-fno-threadsafe-statics',
-      '-flto',
+    const mcuArgs = [
       `-mmcu=${devType}`,
       `-DF_CPU=${devFrequency}UL`
     ];
-    const linkerArgs: string[] = [
-      '-flto',
-      `-mmcu=${devType}`,
-      `-DF_CPU=${devFrequency}UL`
-    ];
-    const libs: string[] | undefined = C.LIBRARIES.get(uri);
-    if (libs) {
-      const includes = (await Promise.all(libs.map(crawlLib))).flat().map(lib => `-I${lib}`);
-      compilerArgs.push(...includes);
-      linkerArgs.push(...includes);
+    const compilerArgs: string[] = C.COMPILER_ARGS.get(uri) || [];
+    const cppStandard: string | undefined = C.CPP_STD.get(uri);
+    if (cppStandard) {
+      compilerArgs.push(`-std=${cppStandard}`);
     }
+    const linkerArgs: string[] = C.LINKER_ARGS.get(uri) || [];
+    const libs: string[] = C.LIBRARIES.get(uri) || [];
+    const includes = (await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`);
     return Promise
       .all(linkables
         .filter(linkable => linkable.needsRebuilding)
         .map(v => { console.info(`To be compiled ${v.target}`); return v; })
         .map(linkable => fs.mkdir(dirname(linkable.target), { recursive: true })
           .catch(() => {})
-          .then(() => spawnSync(exe, [...compilerArgs, linkable.source, `-o${linkable.target}`], { cwd: uri.fsPath }))
+          .then(() => spawnSync(exe, [...mcuArgs, ...compilerArgs, ...includes, '-c', linkable.source, `-o${linkable.target}`], { cwd: uri.fsPath }))
         )
       )
       .then(infos => infos.forEach(info => {
@@ -216,9 +218,10 @@ function compile(uri: Uri) {
           console.warn(`${info.stderr.toString()}`);
           window.showWarningMessage(`Error ${info.status}: cannot compile`);
         }
+        console.info(`${info.stderr.toString()}`);
       }))
       .then(() => console.info(`Linking`))
-      .then(() => spawnSync(exe, [...linkerArgs, ...linkables.map(linkable => linkable.source), `-o${getOutputElf(uri.fsPath)}`], { cwd: uri.fsPath }))
+      .then(() => spawnSync(exe, [...mcuArgs, ...linkerArgs, ...includes, ...linkables.map(linkable => linkable.source), `-o${getOutputElf(uri.fsPath)}`], { cwd: uri.fsPath }))
       .then(info => {
         if (info.error) {
           throw new Error(info.error.message);
@@ -227,6 +230,7 @@ function compile(uri: Uri) {
           console.warn(`${info.stderr.toString()}`);
           window.showWarningMessage(`Error ${info.status}: cannot link`);
         }
+        console.info(`${info.stderr.toString()}`);
       })
       .then(() => spawnSync(join(dirname(exe), 'avr-objdump'), ['--disassemble', '--source', '--line-numbers', '--demangle', getOutputElf(uri.fsPath)], { cwd: uri.fsPath }))
       .then(info => {

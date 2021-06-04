@@ -39,6 +39,46 @@
 						"scope": "resource",
 						"description": "Path to compiler executable (avr-c++)"
 					},
+					"AVR.source.arguments.compiler": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [
+							"-g", "-Os",
+							"-Wall", "-Wextra", "-Wpedantic",
+							"-fpermissive", "-fno-exceptions", "-fno-threadsafe-statics",
+							"-flto",
+							"-pipe"
+						],
+						"scope": "resource",
+						"description": "Compiler arguments"
+					},
+					"AVR.source.arguments.linker": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [
+							"-ffunction-sections", "-fdata-sections",
+							"-flto",
+							"-pipe"
+						],
+						"scope": "resource",
+						"description": "Linker arguments"
+					},
+					"AVR.source.standard.C": {
+						"type": "string",
+						"default": "",
+						"scope": "resource",
+						"description": "C standard compliance"
+					},
+					"AVR.source.standard.C++": {
+						"type": "string",
+						"default": "",
+						"scope": "resource",
+						"description": "C++ standard compliance"
+					},
 					"AVR.source.libraries": {
 						"type": "array",
 						"items": {
@@ -47,6 +87,12 @@
 						"default": [],
 						"scope": "resource",
 						"description": "Paths to folders containing source libraries"
+					},
+					"AVR.source.crawler.max.depth": {
+						"type": "integer",
+						"default": 2,
+						"scope": "resource",
+						"description": "Maximum depth of source directories scanning"
 					},
 					"AVR.device.type": {
 						"type": "string",
