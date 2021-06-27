@@ -119,12 +119,12 @@ function getDependencies(uri: Uri) {
         .split(/\s+/)
         .map(i => normalize(i.replace(/\u0000/g, ' ')));
       result.push(...newResult);
-      const newBaseNames = [...new Set(newResult.filter(v => ANY_HEADER.test(v)).map(v => v.replace(ANY_HEADER, '')))];
+      const newBaseNames = new Set(newResult.filter(v => ANY_HEADER.test(v)).map(v => v.replace(ANY_HEADER, '')));
       const previouslyUnsed = unused;
       toBeChecked = [];
       unused = [];
       previouslyUnsed.forEach(source => {
-        if (newBaseNames.some(base => source.startsWith(base))) {
+        if (newBaseNames.has(source.replace(ANY_SOURCE, ''))) {
           toBeChecked.push(source);
         }
         else {
