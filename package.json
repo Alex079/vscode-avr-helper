@@ -45,9 +45,14 @@
 							"type": "string"
 						},
 						"default": [
-							"-g", "-Os",
-							"-Wall", "-Wextra", "-Wpedantic",
-							"-fpermissive", "-fno-exceptions", "-fno-threadsafe-statics",
+							"-g",
+							"-Os",
+							"-Wall",
+							"-Wextra",
+							"-Wpedantic",
+							"-fpermissive",
+							"-fno-exceptions",
+							"-fno-threadsafe-statics",
 							"-flto",
 							"-pipe"
 						],
@@ -60,7 +65,8 @@
 							"type": "string"
 						},
 						"default": [
-							"-ffunction-sections", "-fdata-sections",
+							"-ffunction-sections",
+							"-fdata-sections",
 							"-flto",
 							"-pipe"
 						],
