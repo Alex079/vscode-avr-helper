@@ -20,7 +20,12 @@ class Conf {
 }
 
 export const COMPILER: Conf = new Conf('AVR.source', 'compiler');
+export const C_STD: Conf = new Conf('AVR.source', 'standard.C');
+export const CPP_STD: Conf = new Conf('AVR.source', 'standard.C++');
+export const COMPILER_ARGS: Conf = new Conf('AVR.source', 'arguments.compiler');
+export const LINKER_ARGS: Conf = new Conf('AVR.source', 'arguments.linker');
 export const LIBRARIES: Conf = new Conf('AVR.source', 'libraries');
+export const MAX_DEPTH: Conf = new Conf('AVR.source', 'crawler.max.depth');
 export const DEVICE_TYPE: Conf = new Conf('AVR.device', 'type');
 export const DEVICE_FREQ: Conf = new Conf('AVR.device', 'frequency');
 export const PROGRAMMER: Conf = new Conf('AVR.programmer', 'tool');
