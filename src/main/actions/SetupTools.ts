@@ -11,7 +11,7 @@ async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
   return getList(uri, kind)
     .then(parseProperties)
     .then(properties => Object.entries<string>(properties))
-    .then(properties => properties.map(([id, name]) => ({ label: (name ? name : id), description: (id) })));
+    .then(properties => properties.map(([id, name]) => ({ label: (name ? name.split(/\s+/, 1)[0] : id), description: (id) }) ));
 }
 
 export async function setupTools(): Promise<void> {
