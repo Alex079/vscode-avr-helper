@@ -11,7 +11,7 @@ async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
   return getProperties(uri, kind)
     .then(parseProperties)
     .then(properties => Object.entries<string>(properties))
-    .then(properties => properties.map(([id, name]) => ({ label: (name ? name : id), description: (id) })));
+    .then(properties => properties.map( ([ description, label ]) => ({ description, label }) ));
 }
 
 export async function setupTools(): Promise<void> {
@@ -36,9 +36,10 @@ export async function setupTools(): Promise<void> {
 export async function setupDevice(): Promise<void> {
   const folder = await pickFolder();
   const devTypes = await listTypes(folder.uri, '-p?');
+  const cut = (s: string): string => s.split(/\s+/, 1)[0].toLowerCase();
 
-  pickOne('Device type', devTypes, item => item.label.toLowerCase() === C.DEVICE_TYPE.get(folder.uri), 1, 2)
-    .then(newDevType => newDevType.label.toLowerCase())
+  pickOne('Device type', devTypes, item => cut(item.label) === C.DEVICE_TYPE.get(folder.uri), 1, 2)
+    .then(newDevType => cut(newDevType.label))
     .then(newDevType => C.DEVICE_TYPE.set(folder.uri, newDevType))
     .then(() => pickNumber('Device frequency', C.DEVICE_FREQ.get(folder.uri), true, 2, 2))
     .then(newFrequency => C.DEVICE_FREQ.set(folder.uri, newFrequency))

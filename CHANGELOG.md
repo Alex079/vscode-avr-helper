@@ -1,7 +1,6 @@
 ## v1.1.5
 
-- Fix mkdir and rm for Windows 10
-- Fix source wildcards
+- Support avrdude output with references like "\[c:\user1\softwares\winavr\bin\avrdude.conf:6185\]"
 
 ## v1.1.4
 
