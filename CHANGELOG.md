@@ -1,3 +1,7 @@
+## v1.1.5
+
+- Support avrdude output with references like "\[c:\user1\softwares\winavr\bin\avrdude.conf:6185\]"
+
 ## v1.1.4
 
 - Fix source files detection
