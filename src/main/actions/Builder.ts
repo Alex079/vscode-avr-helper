@@ -1,34 +1,41 @@
 import { promises as fs } from 'fs';
 import { spawnSync } from "child_process";
-import { QuickPickItem, Uri, window } from "vscode";
+import { CustomExecution, Event, EventEmitter, Pseudoterminal, QuickPickItem, Task, tasks, TaskScope, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import * as C from '../utils/Conf';
 import { getOutputElf, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
 import { pickFolder, pickOne } from "../presentation/Inputs";
 import { fdir } from "fdir";
-import { dirname, join, normalize } from 'path';
+import { basename, dirname, join, normalize } from 'path';
+import { AvrBuildTaskTerminal } from './BuildTerminal';
 
 const GOALS: string[] = ['build', 'clean', 'scan'];
 
 const ANY_HEADER = /\.h(|h|pp|xx|\+\+)$/i;
 const ANY_SOURCE = /\.c(|c|pp|xx|\+\+)$/i;
 
-const toItem = (i: string): QuickPickItem => ({ label: i });
+const toItem = (label: string): QuickPickItem => ({ label });
 const fromItem = (i: QuickPickItem): string => i.label;
 const hidden = (i: string) => i.startsWith('.');
 
-const SRC_CRAWLER = new fdir().withBasePath().withFullPaths().exclude(hidden).filter((f: string) => ANY_SOURCE.test(f));
-function crawlSrc(uri: Uri) {
-  return (dir: string) => {
-    return SRC_CRAWLER.withMaxDepth(C.MAX_DEPTH.get(uri) || 0).crawl(dir).withPromise() as Promise<string[]>;
-  }
-}
+const crawlSrc = (uri: Uri) => (dir: string) =>
+  new fdir()
+    .withBasePath()
+    .withFullPaths()
+    .withMaxDepth(C.MAX_DEPTH.get(uri) || 0)
+    .exclude(hidden)
+    .filter(v => ANY_SOURCE.test(v))
+    .crawl(dir)
+    .withPromise() as Promise<string[]>;
 
-const LIB_CRAWLER = new fdir().withBasePath().withFullPaths().exclude(hidden).onlyDirs();
-function crawlLib(uri: Uri) {
-  return (dir: string) => {
-    return LIB_CRAWLER.withMaxDepth(C.MAX_DEPTH.get(uri) || 0).crawl(dir).withPromise() as Promise<string[]>;
-  }
-}
+const crawlLib = (uri: Uri) => (dir: string) =>
+  new fdir()
+    .withBasePath()
+    .withFullPaths()
+    .withMaxDepth(C.MAX_DEPTH.get(uri) || 0)
+    .exclude(hidden)
+    .onlyDirs()
+    .crawl(dir)
+    .withPromise() as Promise<string[]>;
 
 interface FileTime {
   time: number;
@@ -62,7 +69,15 @@ const dispatch = (uri: Uri) => async (goal: string): Promise<void> => {
       return getSources(uri)
         .then(getDependencies(uri))
         .then(getLinkables(uri))
-        .then(v => console.log(v));
+        .then(v => {
+          console.log(v);
+          const a = v.map(l => `${l.source}[${l.needsRebuilding ? 'rebuild' : 'OK'}]`).join(' ');
+          window.showInformationMessage(a);
+        })
+        .catch(v => {
+          console.error(v);
+          window.showErrorMessage(`${v}`);
+        });
     case 'clean':
       return fs
         .rm(getOutputRoot(uri.fsPath), { recursive: true })
@@ -72,7 +87,14 @@ const dispatch = (uri: Uri) => async (goal: string): Promise<void> => {
         .then(getDependencies(uri))
         .then(getLinkables(uri))
         .then(compile(uri))
-        .then(v => console.log(v));
+        .then(v => {
+          console.log(v);
+          window.showInformationMessage(`${v}`);
+        })
+        .catch(v => {
+          console.error(v);
+          window.showErrorMessage(`${v}`);
+        });
   }
 };
 
@@ -95,22 +117,24 @@ function getDependencies(uri: Uri) {
       `-mmcu=${devType}`,
       `-DF_CPU=${devFrequency}UL`
     ];
-    const libs: string[] | undefined = C.LIBRARIES.get(uri);
-    if (libs) {
+    const libs: string[] = C.LIBRARIES.get(uri) ?? [];
       args.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
-    }
     let toBeChecked: string[] = src.thisFolder;
     let unused: string[] = src.extFolders;
     let result: string[] = [];
     while (toBeChecked.length > 0) {
       const info = spawnSync(exe, [...args, ...toBeChecked], { cwd: uri.fsPath });
       if (info.error) {
+        console.error(`${info.error.message}`);
+        window.showErrorMessage(`Error: cannot collect dependencies. ${info.error.message}`);
         throw new Error(info.error.message);
       }
       if (info.status && info.status > 0) {
         console.warn(`${info.stderr.toString()}`);
-        window.showWarningMessage(`Error ${info.status}: cannot collect dependencies`);
+        window.showWarningMessage(`Error ${info.status}: cannot collect dependencies. ${info.stderr.toString()}`);
+        throw new Error(info.stderr.toString());
       }
+      console.info(`${info.stderr.toString()}`);
       const newResult = info.stdout.toString()
         .replace(/\\ /g, '\u0000')
         .replace(/\\[\r\n]+/g, ' ')
@@ -119,12 +143,12 @@ function getDependencies(uri: Uri) {
         .split(/\s+/)
         .map(i => normalize(i.replace(/\u0000/g, ' ')));
       result.push(...newResult);
-      const newBaseNames = new Set(newResult.filter(v => ANY_HEADER.test(v)).map(v => v.replace(ANY_HEADER, '')));
-      const previouslyUnsed = unused;
+      const newBaseNames = new Set(newResult.filter(v => ANY_HEADER.test(v)).map(v => basename(v).replace(ANY_HEADER, '')));
+      const previouslyUnused = unused;
       toBeChecked = [];
       unused = [];
-      previouslyUnsed.forEach(source => {
-        if (newBaseNames.has(source.replace(ANY_SOURCE, ''))) {
+      previouslyUnused.forEach(source => {
+        if (newBaseNames.delete(basename(source).replace(ANY_SOURCE, ''))) {
           toBeChecked.push(source);
         }
         else {
@@ -139,7 +163,7 @@ function getDependencies(uri: Uri) {
 function getLinkables(uri: Uri) {
   return (dependencies: string[]): Promise<Linkable[]> => {
     return Promise.all(
-      groupDependencies(dependencies, uri).map(group => Promise.all(group.map(getTime)).then(getLinkable))
+      groupDependencies(dependencies, uri).map(group => Promise.all(group.map(getFileTime)).then(getLinkable))
     );
   };
 }
@@ -159,7 +183,7 @@ function groupDependencies(dependencies: string[], uri: Uri): string[][] {
   });
 }
 
-async function getTime(file: string): Promise<FileTime> {
+async function getFileTime(file: string): Promise<FileTime> {
   return fs.stat(file)
     // .then(stats => {
     //   if (stats.isFile()) {
@@ -201,6 +225,8 @@ function compile(uri: Uri) {
     const linkerArgs: string[] = C.LINKER_ARGS.get(uri) || [];
     const libs: string[] = C.LIBRARIES.get(uri) || [];
     const includes = (await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`);
+    // tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, 'AAA', 'BBB', new CustomExecution(async () => new AvrBuildTaskTerminal(
+    //   (writer) =>
     return Promise
       .all(linkables
         .filter(linkable => linkable.needsRebuilding)
@@ -212,47 +238,74 @@ function compile(uri: Uri) {
       )
       .then(infos => infos.forEach(info => {
         if (info.error) {
+          console.error(`${info.error.message}`);
+          window.showErrorMessage(`Error: cannot compile. ${info.error.message}`);
           throw new Error(info.error.message);
         }
+        // writer(info.stderr.toString());
         if (info.status && info.status > 0) {
           console.warn(`${info.stderr.toString()}`);
-          window.showWarningMessage(`Error ${info.status}: cannot compile`);
+          window.showWarningMessage(`Error ${info.status}: cannot compile. ${info.stderr.toString()}`);
+          throw new Error(info.stderr.toString());
         }
-        console.info(`${info.stderr.toString()}`);
+        const warnings = info.stderr.toString();
+        if (warnings) {
+          console.info(warnings);
+          window.showWarningMessage(`Warnings: ${warnings}`);
+        }
+
       }))
       .then(() => console.info(`Linking`))
       .then(() => spawnSync(exe, [...mcuArgs, ...linkerArgs, ...includes, ...linkables.map(linkable => linkable.source), `-o${getOutputElf(uri.fsPath)}`], { cwd: uri.fsPath }))
       .then(info => {
         if (info.error) {
+          console.error(`${info.error.message}`);
+          window.showErrorMessage(`Error: cannot link. ${info.error.message}`);
           throw new Error(info.error.message);
         }
+        // writer(info.stderr.toString());
         if (info.status && info.status > 0) {
           console.warn(`${info.stderr.toString()}`);
-          window.showWarningMessage(`Error ${info.status}: cannot link`);
+          window.showWarningMessage(`Error ${info.status}: cannot link. ${info.stderr.toString()}`);
+          throw new Error(info.stderr.toString());
         }
         console.info(`${info.stderr.toString()}`);
       })
+      .then(() => console.info(`Disassembling`))
       .then(() => spawnSync(join(dirname(exe), 'avr-objdump'), ['--disassemble', '--source', '--line-numbers', '--demangle', getOutputElf(uri.fsPath)], { cwd: uri.fsPath }))
       .then(info => {
         if (info.error) {
+          console.error(`${info.error.message}`);
+          window.showErrorMessage(`Error: cannot disassemble. ${info.error.message}`);
           throw new Error(info.error.message);
         }
+        // writer(info.stderr.toString());
         if (info.status && info.status > 0) {
           console.warn(`${info.stderr.toString()}`);
-          window.showWarningMessage(`Error ${info.status}: cannot disassemble`);
+          window.showWarningMessage(`Error ${info.status}: cannot disassemble. ${info.stderr.toString()}`);
+          throw new Error(info.stderr.toString());
         }
         return fs.writeFile(getOutputLst(uri.fsPath), info.stdout);
       })
       .then(() => spawnSync(join(dirname(exe), 'avr-size'), ['-A', getOutputElf(uri.fsPath)], { cwd: uri.fsPath }))
       .then(info => {
         if (info.error) {
+          console.error(`${info.error.message}`);
+          window.showErrorMessage(`Error: cannot print size. ${info.error.message}`);
           throw new Error(info.error.message);
         }
+        // writer(info.stderr.toString());
         if (info.status && info.status > 0) {
           console.warn(`${info.stderr.toString()}`);
-          window.showWarningMessage(`Error ${info.status}: cannot print size`);
+          window.showWarningMessage(`Error ${info.status}: cannot print size. ${info.stderr.toString()}`);
+          throw new Error(info.stderr.toString());
         }
+        // writer(info.stdout.toString());
         return info.stdout.toString();
-      });
+      })
+      ;
+      // .then(() => undefined)
+    // ))));
+    // return undefined;
   };
 }
