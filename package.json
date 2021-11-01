@@ -19,7 +19,7 @@
 	"publisher": "Alex079",
 	"version": "2.0.0",
 	"engines": {
-		"vscode": "^1.52.1"
+		"vscode": "^1.60.2"
 	},
 	"categories": [
 		"Other"
@@ -160,22 +160,26 @@
 			{
 				"command": "AVR.command.setup.device",
 				"title": "Select device",
-				"category": "AVR Helper"
+				"category": "AVR Helper",
+				"enablement": "AVR.command.setup.device.enabled"
 			},
 			{
 				"command": "AVR.command.setup.programmer",
 				"title": "Select programmer",
-				"category": "AVR Helper"
+				"category": "AVR Helper",
+				"enablement": "AVR.command.setup.programmer.enabled"
 			},
 			{
 				"command": "AVR.command.build",
 				"title": "Build",
-				"category": "AVR Helper"
+				"category": "AVR Helper",
+				"enablement": "AVR.command.build.enabled"
 			},
 			{
 				"command": "AVR.command.flash",
 				"title": "Flash",
-				"category": "AVR Helper"
+				"category": "AVR Helper",
+				"enablement": "AVR.command.flash.enabled"
 			}
 		]
 	},

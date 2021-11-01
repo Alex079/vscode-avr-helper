@@ -16,12 +16,18 @@ function getStatusBarItem(command: string, text: string, tooltip: string, run: (
   return newItem;
 }
 
+const SETUP_TOOLS = 'AVR.command.setup.tools';
+const SETUP_DEVICE = 'AVR.command.setup.device';
+const SETUP_PROGRAMMER = 'AVR.command.setup.programmer';
+const PERFORM_BUILD = 'AVR.command.build';
+const PERFORM_FLASH = 'AVR.command.flash';
+
 const getSetupToolsItem = () => {
-  if (items['setup.tools']) {
-    return items['setup.tools'];
+  if (items[SETUP_TOOLS]) {
+    return items[SETUP_TOOLS];
   }
-  return (items['setup.tools'] = getStatusBarItem(
-    'AVR.command.setup.tools',
+  return (items[SETUP_TOOLS] = getStatusBarItem(
+    SETUP_TOOLS,
     '$(settings) AVR',
     'Edit AVR configuration',
     setupTools
@@ -29,11 +35,11 @@ const getSetupToolsItem = () => {
 };
 
 const getSetupDeviceItem = () => {
-  if (items['setup.device']) {
-    return items['setup.device'];
+  if (items[SETUP_DEVICE]) {
+    return items[SETUP_DEVICE];
   }
-  return (items['setup.device'] = getStatusBarItem(
-    'AVR.command.setup.device',
+  return (items[SETUP_DEVICE] = getStatusBarItem(
+    SETUP_DEVICE,
     '',
     'Select device',
     setupDevice
@@ -41,11 +47,11 @@ const getSetupDeviceItem = () => {
 };
 
 const getSetupProgrammerItem = () => {
-  if (items['setup.programmer']) {
-    return items['setup.programmer'];
+  if (items[SETUP_PROGRAMMER]) {
+    return items[SETUP_PROGRAMMER];
   }
-  return (items['setup.programmer'] = getStatusBarItem(
-    'AVR.command.setup.programmer',
+  return (items[SETUP_PROGRAMMER] = getStatusBarItem(
+    SETUP_PROGRAMMER,
     '',
     'Select programmer',
     setupProgrammer
@@ -53,11 +59,11 @@ const getSetupProgrammerItem = () => {
 };
 
 const getBuildItem = () => {
-  if (items['build']) {
-    return items['build'];
+  if (items[PERFORM_BUILD]) {
+    return items[PERFORM_BUILD];
   }
-  return (items['build'] = getStatusBarItem(
-    'AVR.command.build',
+  return (items[PERFORM_BUILD] = getStatusBarItem(
+    PERFORM_BUILD,
     '$(file-binary) Build',
     'Build source code',
     performBuildTask
@@ -65,11 +71,11 @@ const getBuildItem = () => {
 };
 
 const getFlashItem = () => {
-  if (items['flash']) {
-    return items['flash'];
+  if (items[PERFORM_FLASH]) {
+    return items[PERFORM_FLASH];
   }
-  return (items['flash'] = getStatusBarItem(
-    'AVR.command.flash',
+  return (items[PERFORM_FLASH] = getStatusBarItem(
+    PERFORM_FLASH,
     '$(flame) Flash',
     'Flash binary to device',
     performFlashTask
@@ -88,6 +94,7 @@ export const updateSetupDeviceItem = (uri: Uri | undefined) => {
   } else {
     item.hide();
   }
+  commands.executeCommand('setContext', `${SETUP_DEVICE}.enabled`, !!item.text);
 };
 
 export const updateSetupProgrammerItem = (uri: Uri | undefined) => {
@@ -98,24 +105,29 @@ export const updateSetupProgrammerItem = (uri: Uri | undefined) => {
   } else {
     item.hide();
   }
+  commands.executeCommand('setContext', `${SETUP_PROGRAMMER}.enabled`, !!item.text);
 };
 
 export const updateBuildItem = (uri: Uri | undefined) => {
   const item = getBuildItem();
-  if (uri ? getBuildItemFlag(uri) : false) {
+  const show = uri ? getBuildItemFlag(uri) : false;
+  if (show) {
     item.show();
   } else {
     item.hide();
   }
+  commands.executeCommand('setContext', `${PERFORM_BUILD}.enabled`, show);
 };
 
 export const updateFlashItem = (uri: Uri | undefined) => {
   const item = getFlashItem();
-  if (uri ? getFlashItemFlag(uri) : false) {
+  const show = uri ? getFlashItemFlag(uri) : false;
+  if (show) {
     item.show();
   } else {
     item.hide();
   }
+  commands.executeCommand('setContext', `${PERFORM_FLASH}.enabled`, show);
 };
 
 const getSetupDeviceItemText = (uri: Uri): string =>
