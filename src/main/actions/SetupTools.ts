@@ -5,7 +5,8 @@ import { getCCppProps } from '../utils/Files';
 import { parseProperties } from '../utils/Properties';
 import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from '../presentation/Inputs';
 import { propagateSettings } from './Propagator';
-import { getProperties } from './ToolsCapabilities';
+import { getProperties, getSizeFormat } from './ToolsCapabilities';
+import { basename, dirname } from 'path';
 
 async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
   return getProperties(uri, kind)
@@ -19,7 +20,13 @@ export async function setupTools(): Promise<void> {
 
   prepareConfigFiles(uri)
     .then(() => pickFile('Full path to compiler executable', C.COMPILER.get(uri), true, true, false, 1, 4))
-    .then(newCompiler => C.COMPILER.set(uri, newCompiler))
+    .then(newCompiler => {
+      const oldCompiler = C.COMPILER.get(uri);
+      if (newCompiler && (oldCompiler !== newCompiler)) {
+        C.REPORTER_ARGS.set(uri, [getSizeFormat(uri, dirname(newCompiler))]);
+      }
+      C.COMPILER.set(uri, newCompiler);
+    })
 
     .then(() => pickFile('Full path to programmer executable', C.PROGRAMMER.get(uri), true, true, false, 2, 4))
     .then(newProgrammer => C.PROGRAMMER.set(uri, newProgrammer))

@@ -19,7 +19,7 @@
 	"publisher": "Alex079",
 	"version": "2.0.0",
 	"engines": {
-		"vscode": "^1.60.2"
+		"vscode": "^1.63.2"
 	},
 	"categories": [
 		"Other"
@@ -72,6 +72,37 @@
 						],
 						"scope": "resource",
 						"description": "Linker arguments"
+					},
+					"AVR.source.arguments.disassembler": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [
+							"--disassemble",
+							"--source",
+							"--line-numbers",
+							"--demangle"
+						],
+						"scope": "resource",
+						"description": "avr-objdump arguments"
+					},
+					"AVR.source.arguments.reporter": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [
+							"-A"
+						],
+						"scope": "resource",
+						"description": "avr-size arguments"
+					},
+					"AVR.source.highlight": {
+						"type": "boolean",
+						"default": false,
+						"scope": "resource",
+						"description": "Highlight errors and warnings from build terminal"
 					},
 					"AVR.source.standard.C": {
 						"type": "string",
@@ -199,12 +230,12 @@
 	"devDependencies": {
 		"@types/chai": "^4",
 		"@types/mocha": "^9",
-		"@types/node": "^14",
+		"@types/node": "^17",
 		"@types/vscode": "^1",
-		"@typescript-eslint/eslint-plugin": "^4",
-		"@typescript-eslint/parser": "^4",
+		"@typescript-eslint/eslint-plugin": "^5",
+		"@typescript-eslint/parser": "^5",
 		"chai": "^4",
-		"eslint": "^7",
+		"eslint": "^8",
 		"mocha": "^9",
 		"ts-loader": "^9",
 		"typescript": "^4",
