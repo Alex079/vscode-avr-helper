@@ -6,7 +6,7 @@ import { parseProperties } from '../utils/Properties';
 import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from '../presentation/Inputs';
 import { propagateSettings } from './Propagator';
 import { getProperties, getSizeFormat } from './ToolsCapabilities';
-import { basename, dirname } from 'path';
+import { dirname } from 'path';
 
 async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
   return getProperties(uri, kind)
@@ -18,7 +18,7 @@ async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
 export async function setupTools(): Promise<void> {
   const uri = (await pickFolder()).uri;
 
-  prepareConfigFiles(uri)
+  return prepareConfigFiles(uri)
     .then(() => pickFile('Full path to compiler executable', C.COMPILER.get(uri), true, true, false, 1, 4))
     .then(newCompiler => {
       const oldCompiler = C.COMPILER.get(uri);
@@ -45,7 +45,7 @@ export async function setupDevice(): Promise<void> {
   const devTypes = await listTypes(folder.uri, '-p?');
   const cut = (s: string): string => s.split(/\s+/, 1)[0].toLowerCase();
 
-  pickOne('Device type', devTypes, item => cut(item.label) === C.DEVICE_TYPE.get(folder.uri), 1, 2)
+  return pickOne('Device type', devTypes, item => cut(item.label) === C.DEVICE_TYPE.get(folder.uri), 1, 2)
     .then(newDevType => cut(newDevType.label))
     .then(newDevType => C.DEVICE_TYPE.set(folder.uri, newDevType))
     .then(() => pickNumber('Device frequency', C.DEVICE_FREQ.get(folder.uri), true, 2, 2))
@@ -57,7 +57,7 @@ export async function setupProgrammer(): Promise<void> {
   const folder = await pickFolder();
   const progTypes = await listTypes(folder.uri, '-c?');
 
-  pickOne('Programmer type', progTypes, item => item.description?.toLowerCase() === C.PROG_TYPE.get(folder.uri), 1, 3)
+  return pickOne('Programmer type', progTypes, item => item.description?.toLowerCase() === C.PROG_TYPE.get(folder.uri), 1, 3)
     .then(newProgType => newProgType.description?.toLowerCase())
     .then(newProgType => C.PROG_TYPE.set(folder.uri, newProgType))
     .then(() => pickString('Upload port', C.PROG_PORT.get(folder.uri), false, 2, 3))
@@ -68,6 +68,6 @@ export async function setupProgrammer(): Promise<void> {
 }
 
 async function prepareConfigFiles(uri: Uri): Promise<void> {
-  fs.stat(getCCppProps(uri.fsPath))
-    .catch(() => propagateSettings(uri));
+  return fs.stat(getCCppProps(uri.fsPath))
+    .then(() => {}, () => propagateSettings(uri));
 }

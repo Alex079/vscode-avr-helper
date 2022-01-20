@@ -9,8 +9,8 @@ const ERASE: string = '(erase chip)';
 const toItem = (i: string): QuickPickItem => ({ label: i });
 const fromItem = (i: QuickPickItem): string => i.label;
 
-export async function performFlashTask(): Promise<void> {
-  pickFolder().then(folder => {
+export function performFlashTask(): Promise<void> {
+  return pickFolder().then(folder => {
     const outputFile = getOutputElf(folder.uri.fsPath);
     fs.stat(outputFile)
       .then(stats => {
@@ -23,7 +23,7 @@ export async function performFlashTask(): Promise<void> {
       .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), () => false))
       .then(areas => areas.map(fromItem))
       .then(flashAreas(folder, outputFile))
-      .catch((reason) => window.showErrorMessage(reason.toString()));
+      .catch(reason => window.showErrorMessage(reason.toString()));
   })
   .catch(console.trace);
 }

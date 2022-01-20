@@ -1,7 +1,7 @@
 import { Uri } from "vscode";
 import * as C from '../utils/Conf';
 import { spawnSync } from "child_process";
-import { dirname, join } from "path";
+import { join } from "path";
 
 export async function getProperties(uri: Uri, kind: string): Promise<string> {
   const exe: string | undefined = C.PROGRAMMER.get(uri);

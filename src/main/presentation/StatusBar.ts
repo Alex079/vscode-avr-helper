@@ -7,7 +7,7 @@ import { performFlashTask } from '../actions/Flasher';
 
 const items: { [key: string]: StatusBarItem } = {};
 
-function getStatusBarItem(command: string, text: string, tooltip: string, run: () => {}): StatusBarItem {
+function getStatusBarItem(command: string, text: string, tooltip: string, run: () => void): StatusBarItem {
   const newItem = window.createStatusBarItem();
   newItem.command = command;
   newItem.text = text;

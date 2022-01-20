@@ -7,7 +7,7 @@ import { getCCppProps } from '../utils/Files';
 const avrFilter = (c: any) => c.name === 'AVR';
 const DEFAULT = '${default}';
 
-async function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): Promise<void> {
+function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): Promise<void> {
   const name = getCCppProps(folder.fsPath);
   const location = dirname(name);
   return fs

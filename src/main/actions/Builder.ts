@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import { spawnSync } from "child_process";
-import { CustomExecution, QuickPickItem, Task, tasks, TaskScope, Uri, window, workspace } from "vscode";
+import { CustomExecution, EventEmitter, QuickPickItem, Task, tasks, TaskScope, Uri, window, workspace } from "vscode";
 import * as C from '../utils/Conf';
 import { getOutputElf, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
 import { pickFolder, pickOne } from "../presentation/Inputs";
@@ -54,34 +54,54 @@ interface Linkable {
   needsRebuilding: boolean;
 }
 
-export async function performBuildTask(): Promise<void> {
-  pickFolder()
+export function performBuildTask(): Promise<void> {
+  return pickFolder()
     .then(folder => 
       pickOne('Select build goal', GOALS.map(toItem), () => false)
         .then(fromItem)
         .then(dispatch(folder.uri))
     )
-    .catch(v => window.showErrorMessage(`${v}`));
+    .catch(console.info);
 }
 
-const dispatch = (uri: Uri) => async (goal: string): Promise<void> => {
+const dispatch = (uri: Uri) => (goal: string): void => {
   switch (goal) {
     case 'scan':
-      return getSources(uri)
-        .then(getDependencies(uri))
-        .then(getLinkables(uri))
-        .then(printInfo(uri));
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔍 Scan "${uri.path}" (${new Date()})`, 'AVR Helper',
+        new CustomExecution(async () => new AvrBuildTaskTerminal(emitter =>
+          getSources(uri)
+            .then(getDependencies(uri))
+            .then(getLinkables(uri))
+            .then(printInfo(uri, emitter))
+            .catch(console.error)
+        ))
+      ));
+      break;
     case 'clean':
-      return fs
-        .rm(getOutputRoot(uri.fsPath), { recursive: true })
-        .catch(() => {});
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🧹 Clean "${uri.path}" (${new Date()})`, 'AVR Helper',
+        new CustomExecution(async () => new AvrBuildTaskTerminal(emitter => clean(uri, emitter)))
+      ));
+      break;
     case 'build':
-      return getSources(uri)
-        .then(getDependencies(uri))
-        .then(getLinkables(uri))
-        .then(build(uri));
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔧 Build "${uri.path}" (${new Date()})`, 'AVR Helper',
+        new CustomExecution(async () => new AvrBuildTaskTerminal(emitter =>
+          getSources(uri)
+            .then(getDependencies(uri))
+            .then(getLinkables(uri))
+            .then(build(uri, emitter))
+            .catch(console.error)
+        )), C.HIGHLIGHT.get(uri) ? '$gcc' : undefined
+      ));
+      break;
   }
 };
+
+function clean(uri: Uri, emitter: EventEmitter<string>): Promise<void> {
+  return fs
+    .rm(getOutputRoot(uri.fsPath), { recursive: true, force: true })
+    .then(() => emitter.fire('✅\n'))
+    .catch(error => emitter.fire(`❌ ${error}\n`));
+}
 
 function getSources(uri: Uri): Promise<Sources> {
   const extLibraries: string[] = C.LIBRARIES.get(uri) ?? [];
@@ -185,7 +205,7 @@ function getLinkable(dependencies: FileTime[]): Linkable {
   };
 }
 
-function build(uri: Uri) {
+function build(uri: Uri, emitter: EventEmitter<string>) {
   return async (linkables: Linkable[]): Promise<void> => {
     const exe: string | undefined = C.COMPILER.get(uri);
     const devType: string | undefined = C.DEVICE_TYPE.get(uri);
@@ -197,107 +217,99 @@ function build(uri: Uri) {
       `-mmcu=${devType}`,
       `-DF_CPU=${devFrequency}UL`
     ];
-    tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `Build "${uri.path}" at ${new Date()}`, 'AVR Helper',
-      new CustomExecution(async () => new AvrBuildTaskTerminal(emitter => Promise
-        .all(linkables
-          .filter(linkable => linkable.needsRebuilding)
-          .map(linkable => fs
-            .mkdir(dirname(linkable.target), { recursive: true })
-            .catch(() => {})
-            .then(async () => {
-              const compilerArgs: string[] = C.COMPILER_ARGS.get(uri) || [];
-              const cppStandard: string | undefined = C.CPP_STD.get(uri);
-              if (cppStandard) {
-                compilerArgs.push(`-std=${cppStandard}`);
-              }
-              const libs: string[] = C.LIBRARIES.get(uri) || [];
-              compilerArgs.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
-              return spawnSync(exe, [...mcuArgs, ...compilerArgs, '-c', linkable.source, '-o', linkable.target], { cwd: uri.fsPath });
-            })
-            .then(info => {
-              if (info.error) {
-                emitter.fire(info.error.message);
-                return false;
-              }
-              emitter.fire(info.stderr.toString());
-              return !(info.status && info.status > 0);
-            })
-          )
+    return Promise
+      .all(linkables
+        .filter(linkable => linkable.needsRebuilding)
+        .map(linkable => fs
+          .mkdir(dirname(linkable.target), { recursive: true })
+          .catch(() => {})
+          .then(async () => {
+            const compilerArgs: string[] = C.COMPILER_ARGS.get(uri) || [];
+            const cppStandard: string | undefined = C.CPP_STD.get(uri);
+            if (cppStandard) {
+              compilerArgs.push(`-std=${cppStandard}`);
+            }
+            const libs: string[] = C.LIBRARIES.get(uri) || [];
+            compilerArgs.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
+            const info = spawnSync(exe, [...mcuArgs, ...compilerArgs, '-c', linkable.source, '-o', linkable.target], { cwd: uri.fsPath });
+            if (info.error) {
+              emitter.fire(info.error.message);
+              return false;
+            }
+            emitter.fire(info.stderr.toString());
+            return !(info.status && info.status > 0);
+          })
         )
-        .then(result => {
-          if (result.some(success => !success)) {
-            throw new Error('Compilation failed.');
-          }
-          emitter.fire(`Compiled ${result.length} files.\n`);
-        })
-        .then(() => {
-          const linkerArgs: string[] = C.LINKER_ARGS.get(uri) || [];
-          return spawnSync(exe, [...mcuArgs, ...linkerArgs, ...linkables.map(linkable => linkable.target), '-o', getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
-        })
-        .then(info => {
-          if (info.error) {
-            emitter.fire(info.error.message);
+      )
+      .then(results => {
+        const result = results.every(success => success);
+        emitter.fire(`${result ? '✅' : '❌'} Compilation\n`);
+        if (!result) {
+          throw new Error('Compilation failed.');
+        }
+      })
+      .then(() => {
+        const linkerArgs: string[] = C.LINKER_ARGS.get(uri) || [];
+        const info = spawnSync(exe, [...mcuArgs, ...linkerArgs, ...linkables.map(linkable => linkable.target), '-o', getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
+        if (info.error) {
+          emitter.fire(info.error.message);
+          return false;
+        }
+        emitter.fire(info.stderr.toString());
+        return !(info.status && info.status > 0);
+      })
+      .then(result => {
+        emitter.fire(`${result ? '✅' : '❌'} Linkage\n`);
+        if (!result) {
+          throw new Error('Linkage failed.');
+        }
+      })
+      .then(() => {
+        const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) || [];
+        const info = spawnSync(join(dirname(exe), 'avr-objdump'), [...disassemblerArgs, getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
+        if (info.error) {
+          emitter.fire(info.error.message);
+          return false;
+        }
+        emitter.fire(info.stderr.toString());
+        if (info.status && info.status > 0) {
+          return false;
+        }
+        return fs.writeFile(getOutputLst(uri.fsPath), info.stdout)
+          .then(() => true)
+          .catch(error => {
+            emitter.fire(`${error}\n`);
             return false;
-          }
-          emitter.fire(info.stderr.toString());
-          return !(info.status && info.status > 0);
-        })
-        .then(result => {
-          if (!result) {
-            throw new Error('Linkage failed.');
-          }
-          emitter.fire('Linked.\n');
-        })
-        .then(() => {
-          const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) || [];
-          return spawnSync(join(dirname(exe), 'avr-objdump'), [...disassemblerArgs, getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
-        })
-        .then(info => {
-          if (info.error) {
-            emitter.fire(info.error.message);
-            return;
-          }
-          emitter.fire(info.stderr.toString());
-          if (info.status && info.status > 0) {
-            return;
-          }
-          return fs.writeFile(getOutputLst(uri.fsPath), info.stdout);
-        })
-        .then(() => emitter.fire('Disassembled.\n'))
-        .then(() => {
-          const reporterArgs: string[] = C.REPORTER_ARGS.get(uri) || [];
-          if (reporterArgs.includes('-C')) {
-            reporterArgs.push(`--mcu=${devType}`);
-          }
-          return spawnSync(join(dirname(exe), 'avr-size'), [...reporterArgs, getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
-        })
-        .then(info => {
-          if (info.error) {
-            emitter.fire(info.error.message);
-            return;
-          }
-          emitter.fire(info.stderr.toString());
-          if (info.status && info.status > 0) {
-            return;
-          }
-          emitter.fire(info.stdout.toString());
-        })
-    )), C.HIGHLIGHT.get(uri) ? '$gcc' : undefined));
+          });
+      })
+      .then(result => emitter.fire(`${result ? '✅' : '❌'} Disassembling\n`))
+      .then(() => {
+        const reporterArgs: string[] = C.REPORTER_ARGS.get(uri) || [];
+        if (reporterArgs.includes('-C')) {
+          reporterArgs.push(`--mcu=${devType}`);
+        }
+        const info = spawnSync(join(dirname(exe), 'avr-size'), [...reporterArgs, getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
+        if (info.error) {
+          emitter.fire(info.error.message);
+          return;
+        }
+        emitter.fire(info.stderr.toString());
+        if (info.status && info.status > 0) {
+          return;
+        }
+        emitter.fire(info.stdout.toString());
+      });
   };
 }
 
-function printInfo(uri: Uri) {
-  return async (linkables: Linkable[]): Promise<void> => {
-    tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `Scan "${uri.path}" at ${new Date()}`, 'AVR Helper',
-      new CustomExecution(async () => new AvrBuildTaskTerminal(async emitter => {
-        linkables.forEach((linkable, index) => {
-          const search = new RegExp(`^${uri.fsPath}${path.sep}`);
-          emitter.fire(`${index === 0 ? ' ' : '│'} ┌─${linkable.source.replace(search, '')}\n`);
-          emitter.fire(`${index === 0 ? '┌' : '├'}─${linkable.needsRebuilding ? '✖' : '┴'}─${linkable.target.replace(search, '')}\n`);
-          emitter.fire('│\n');
-        });
-        emitter.fire(`└─🭬Build Target\n`);
-      }))
-    ));
+function printInfo(uri: Uri, emitter: EventEmitter<string>) {
+  return (linkables: Linkable[]): void => {
+    linkables.forEach((linkable, index) => {
+      const search = new RegExp(`^${uri.fsPath}${path.sep}`);
+      emitter.fire(`${index === 0 ? ' ' : '│'} ┌─${linkable.source.replace(search, '')}\n`);
+      emitter.fire(`${index === 0 ? '┌' : '├'}─${linkable.needsRebuilding ? '✖' : '┴'}─${linkable.target.replace(search, '')}\n`);
+      emitter.fire('│\n');
+    });
+    emitter.fire(`└─🭬Build Target\n`);
   };
 }
