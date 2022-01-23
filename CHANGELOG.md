@@ -1,3 +1,10 @@
+## v2.0.0
+
+- Change build system from make to built-in to better support cross-platform build
+- Auto-detect different versions of avr-size
+- Add more configuration options
+- Minor bugfixes
+
 ## v1.1.5
 
 - Support avrdude output with references like "\[c:\user1\softwares\winavr\bin\avrdude.conf:6185\]"

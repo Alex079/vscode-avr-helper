@@ -1,6 +1,6 @@
 # AVR Helper Extension
 
-Helper extension to simplify code compilation and flashing for AVR chips. This extension creates a C/C++ build system based on "make" in currently open folder. It needs make, avr-gcc, and avrdude installed. It uses C/C++ extension to provide language support.
+Helper extension to simplify code compilation and flashing for AVR chips. This extension allows building and flashing executable for AVR from C/C++ source files. It needs avr-gcc and avrdude installed. It uses C/C++ extension to provide language support.
 
 ## Features
 
@@ -15,7 +15,7 @@ The AVR Helper adds five items to the window status bar:
 Displayed as `AVR`
 
 This is the starting point to configure build system.
-- Makefiles are created when this item is clicked
+- C/C++ extension configuration file is created when this item is activated
 - Step 1: choose avr-gcc executable file
 - Step 2: choose avrdude executable file
 - Step 3: choose avrdude.conf
@@ -43,7 +43,7 @@ This item displays and allows for selecting programmer type, port, and baud rate
 Displayed as `Build`
 
 This item triggers make of a currently open folder or a folder of currently displayed file. There are three options:
-- build: compile, link, display ELF information
+- build: compile, link, disassemble, display ELF information
 - clean: remove the build output
 - scan: list all C/C++ files which will be used for build
 
@@ -57,31 +57,10 @@ This item triggers a connection to the device using the programmer to list all a
 
 ## Requirements
 
-- make (build system)
 - avr-gcc (compilation)
 - avrdude (programmer driver)
 - C/C++ extension (language support)
 
-## Extension Settings
-
-This extension contributes the following settings:
-
-|Setting|Value example|
-|-|-|
-|`AVR.source.compiler`|`/usr/bin/avr-c++`|
-|`AVR.source.libraries`|`/home/demo/Arduino/libraries`|
-|`AVR.device.type`|`attiny85`|
-|`AVR.device.frequency`|`1000000`|
-|`AVR.programmer.tool`|`/usr/bin/avrdude`|
-|`AVR.programmer.definitions`|`/etc/avrdude.conf`|
-|`AVR.programmer.type`|`stk500v1`|
-|`AVR.programmer.port`|`/dev/ttyACM0`|
-|`AVR.programmer.rate`|`19200`|
-
-## How to
-
-[Update build system](https://github.com/Alex079/vscode-avr-helper/wiki/Update-build-system)
-
 ## Known Issues
 
-Debug and simulation modes are not implemented
+Debug and simulation modes are not implemented.

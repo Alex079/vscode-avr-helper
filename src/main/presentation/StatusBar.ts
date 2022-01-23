@@ -23,10 +23,7 @@ const PERFORM_BUILD = 'AVR.command.build';
 const PERFORM_FLASH = 'AVR.command.flash';
 
 const getSetupToolsItem = () => {
-  if (items[SETUP_TOOLS]) {
-    return items[SETUP_TOOLS];
-  }
-  return (items[SETUP_TOOLS] = getStatusBarItem(
+  return items[SETUP_TOOLS] ?? (items[SETUP_TOOLS] = getStatusBarItem(
     SETUP_TOOLS,
     '$(settings) AVR',
     'Edit AVR configuration',
@@ -35,10 +32,7 @@ const getSetupToolsItem = () => {
 };
 
 const getSetupDeviceItem = () => {
-  if (items[SETUP_DEVICE]) {
-    return items[SETUP_DEVICE];
-  }
-  return (items[SETUP_DEVICE] = getStatusBarItem(
+  return items[SETUP_DEVICE] ?? (items[SETUP_DEVICE] = getStatusBarItem(
     SETUP_DEVICE,
     '',
     'Select device',
@@ -47,10 +41,7 @@ const getSetupDeviceItem = () => {
 };
 
 const getSetupProgrammerItem = () => {
-  if (items[SETUP_PROGRAMMER]) {
-    return items[SETUP_PROGRAMMER];
-  }
-  return (items[SETUP_PROGRAMMER] = getStatusBarItem(
+  return items[SETUP_PROGRAMMER] ?? (items[SETUP_PROGRAMMER] = getStatusBarItem(
     SETUP_PROGRAMMER,
     '',
     'Select programmer',
@@ -59,10 +50,7 @@ const getSetupProgrammerItem = () => {
 };
 
 const getBuildItem = () => {
-  if (items[PERFORM_BUILD]) {
-    return items[PERFORM_BUILD];
-  }
-  return (items[PERFORM_BUILD] = getStatusBarItem(
+  return items[PERFORM_BUILD] ?? (items[PERFORM_BUILD] = getStatusBarItem(
     PERFORM_BUILD,
     '$(file-binary) Build',
     'Build source code',
@@ -71,10 +59,7 @@ const getBuildItem = () => {
 };
 
 const getFlashItem = () => {
-  if (items[PERFORM_FLASH]) {
-    return items[PERFORM_FLASH];
-  }
-  return (items[PERFORM_FLASH] = getStatusBarItem(
+  return items[PERFORM_FLASH] ?? (items[PERFORM_FLASH] = getStatusBarItem(
     PERFORM_FLASH,
     '$(flame) Flash',
     'Flash binary to device',
