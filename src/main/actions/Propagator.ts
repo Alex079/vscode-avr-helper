@@ -53,10 +53,12 @@ export function propagateSettings(uri: Uri): Promise<void> {
       conf.cppStandard = DEFAULT;
     }
     conf.includePath = libraries.map(lib => join(lib, '**'));
-    conf.compilerArgs = [
-      `-mmcu=${deviceType}`,
-      `-DF_CPU=${deviceFreq}UL`,
-      ...compilerArgs
-    ];
+    if (deviceType) {
+      compilerArgs.push(`-mmcu=${deviceType}`);
+    }
+    if (deviceFreq) {
+      compilerArgs.push(`-DF_CPU=${deviceFreq}UL`);
+    }
+    conf.compilerArgs = compilerArgs;
   });
 }
