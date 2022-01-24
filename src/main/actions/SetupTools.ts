@@ -48,7 +48,7 @@ export async function setupDevice(): Promise<void> {
   return pickOne('Device type', devTypes, item => cut(item.label) === C.DEVICE_TYPE.get(folder.uri), 1, 2)
     .then(newDevType => cut(newDevType.label))
     .then(newDevType => C.DEVICE_TYPE.set(folder.uri, newDevType))
-    .then(() => pickNumber('Device frequency', C.DEVICE_FREQ.get(folder.uri), true, 2, 2))
+    .then(() => pickNumber('Device frequency', C.DEVICE_FREQ.get(folder.uri), false, 2, 2))
     .then(newFrequency => C.DEVICE_FREQ.set(folder.uri, newFrequency))
     .catch(console.trace);
 }
