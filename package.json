@@ -49,11 +49,9 @@
 							"-Os",
 							"-Wall",
 							"-Wextra",
-							"-Wpedantic",
 							"-fpermissive",
 							"-fno-exceptions",
 							"-fno-threadsafe-statics",
-							"-flto",
 							"-pipe"
 						],
 						"scope": "resource",
@@ -67,7 +65,6 @@
 						"default": [
 							"-ffunction-sections",
 							"-fdata-sections",
-							"-flto",
 							"-pipe"
 						],
 						"scope": "resource",
