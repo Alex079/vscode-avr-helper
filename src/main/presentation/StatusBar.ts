@@ -122,7 +122,7 @@ const getSetupProgrammerItemText = (uri: Uri): string =>
   !!C.PROGRAMMER.get(uri) ? `${C.PROG_TYPE.get(uri) || '-'} | ${C.PROG_PORT.get(uri) || '-'} | ${C.PROG_RATE.get(uri) || '-'} Baud` : '';
 
 const getBuildItemFlag = (uri: Uri): boolean =>
-  !!C.COMPILER.get(uri) && !!C.PROGRAMMER.get(uri) && !!C.DEVICE_TYPE.get(uri) && !!C.DEVICE_FREQ.get(uri);
+  !!C.COMPILER.get(uri) && !!C.PROGRAMMER.get(uri) && !!C.DEVICE_TYPE.get(uri);
 
 const getFlashItemFlag = (uri: Uri): boolean =>
   !!C.PROGRAMMER.get(uri) && !!C.DEVICE_TYPE.get(uri) && !!C.PROG_TYPE.get(uri);

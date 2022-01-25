@@ -67,7 +67,7 @@ export function performBuildTask(): Promise<void> {
 const dispatch = (uri: Uri) => (goal: string): void => {
   switch (goal) {
     case 'scan':
-      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔍 Scan "${uri.path}" (${new Date()})`, 'AVR Helper',
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔍 Scan "${uri.fsPath}" (${new Date()})`, 'AVR Helper',
         new CustomExecution(async () => new AvrBuildTaskTerminal(emitter =>
           getSources(uri)
             .then(getDependencies(uri))
@@ -78,12 +78,12 @@ const dispatch = (uri: Uri) => (goal: string): void => {
       ));
       break;
     case 'clean':
-      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🧹 Clean "${uri.path}" (${new Date()})`, 'AVR Helper',
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🧹 Clean "${uri.fsPath}" (${new Date()})`, 'AVR Helper',
         new CustomExecution(async () => new AvrBuildTaskTerminal(emitter => clean(uri, emitter)))
       ));
       break;
     case 'build':
-      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔧 Build "${uri.path}" (${new Date()})`, 'AVR Helper',
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔧 Build "${uri.fsPath}" (${new Date()})`, 'AVR Helper',
         new CustomExecution(async () => new AvrBuildTaskTerminal(emitter =>
           getSources(uri)
             .then(getDependencies(uri))
@@ -114,14 +114,16 @@ function getDependencies(uri: Uri) {
     const exe: string | undefined = C.COMPILER.get(uri);
     const devType: string | undefined = C.DEVICE_TYPE.get(uri);
     const devFrequency: number | undefined = C.DEVICE_FREQ.get(uri);
-    if (!exe || !devType || !devFrequency) {
+    if (!exe || !devType) {
       return [];
     }
     const args: string[] = [
       '-MM',
-      `-mmcu=${devType}`,
-      `-DF_CPU=${devFrequency}UL`
+      `-mmcu=${devType}`
     ];
+    if (devFrequency) {
+      args.push(`-DF_CPU=${devFrequency}UL`);
+    }
     const libs: string[] = C.LIBRARIES.get(uri) ?? [];
     args.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
     let toBeChecked: string[] = src.thisFolder;
@@ -210,13 +212,15 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
     const exe: string | undefined = C.COMPILER.get(uri);
     const devType: string | undefined = C.DEVICE_TYPE.get(uri);
     const devFrequency: number | undefined = C.DEVICE_FREQ.get(uri);
-    if (!exe || !devType || !devFrequency) {
+    if (!exe || !devType) {
       return;
     }
     const mcuArgs = [
-      `-mmcu=${devType}`,
-      `-DF_CPU=${devFrequency}UL`
+      `-mmcu=${devType}`
     ];
+    if (devFrequency) {
+      mcuArgs.push(`-DF_CPU=${devFrequency}UL`);
+    }
     return Promise
       .all(linkables
         .filter(linkable => linkable.needsRebuilding)
@@ -305,11 +309,11 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
 function printInfo(uri: Uri, emitter: EventEmitter<string>) {
   return (linkables: Linkable[]): void => {
     linkables.forEach((linkable, index) => {
-      const search = new RegExp(`^${uri.fsPath}${path.sep}`);
+      const search: string = `${uri.fsPath}${path.sep}`;
       emitter.fire(`${index === 0 ? ' ' : '│'} ┌─${linkable.source.replace(search, '')}\n`);
       emitter.fire(`${index === 0 ? '┌' : '├'}─${linkable.needsRebuilding ? '✖' : '┴'}─${linkable.target.replace(search, '')}\n`);
       emitter.fire('│\n');
     });
-    emitter.fire(`└─🭬Build Target\n`);
+    emitter.fire(`└─► Build Target\n`);
   };
 }
