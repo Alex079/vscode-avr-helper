@@ -2,19 +2,19 @@ import { Uri } from 'vscode';
 import { join } from 'path';
 import { getContext } from './Context';
 
-const OUTPUT: string = join('.vscode', 'avr.build', 'output.elf');
+const OUTPUT_ROOT: string = join('.vscode', 'avr.build');
+const OUTPUT_ELF: string = join(OUTPUT_ROOT, 'output.elf');
+const OUTPUT_LST: string = join(OUTPUT_ROOT, 'output.lst');
+const OUTPUT_OBJ: string = join(OUTPUT_ROOT, 'obj');
 const C_CPP_PROPS: string = join('.vscode', 'c_cpp_properties.json');
-const MAKE_PROPS: string = join('.vscode', 'avr.properties.mk');
-const MAKE_TARGETS: string = join('.vscode', 'avr.targets.mk');
 const PLUS_LIGHT = join('resources', 'plus-light.svg');
 const PLUS_DARK = join('resources', 'plus-dark.svg');
-const DEFAULT_MAKE_TARGETS: string = join('resources', 'avr.targets.mk');
 
-export const getOutput = (folder: string) => join(folder, OUTPUT);
+export const getOutputRoot = (folder: string) => join(folder, OUTPUT_ROOT);
+export const getOutputElf = (folder: string) => join(folder, OUTPUT_ELF);
+export const getOutputLst = (folder: string) => join(folder, OUTPUT_LST);
+export const getOutputObj = (folder: string) => join(folder, OUTPUT_OBJ);
 export const getCCppProps = (folder: string) => join(folder, C_CPP_PROPS);
-export const getMakeProps = (folder: string) => join(folder, MAKE_PROPS);
-export const getMakeTargets = (folder: string) => join(folder, MAKE_TARGETS);
-export const getDefaultMakeTargets = () => join(getContext().extensionPath, DEFAULT_MAKE_TARGETS);
 export const getPlusIcon = () => {
   const uri = getContext().extensionUri;
   return {

@@ -1,14 +1,15 @@
 import { promises as fs } from 'fs';
 import { QuickPickItem, Uri } from 'vscode';
 import * as C from '../utils/Conf';
-import { getCCppProps, getDefaultMakeTargets, getMakeProps, getMakeTargets } from '../utils/Files';
+import { getCCppProps } from '../utils/Files';
 import { parseProperties } from '../utils/Properties';
 import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from '../presentation/Inputs';
 import { propagateSettings } from './Propagator';
-import { getList } from './Runner';
+import { getProperties, getSizeFormat } from './ToolsCapabilities';
+import { dirname } from 'path';
 
 async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
-  return getList(uri, kind)
+  return getProperties(uri, kind)
     .then(parseProperties)
     .then(properties => Object.entries<string>(properties))
     .then(properties => properties.map( ([ description, label ]) => ({ description, label }) ));
@@ -17,9 +18,15 @@ async function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
 export async function setupTools(): Promise<void> {
   const uri = (await pickFolder()).uri;
 
-  prepareBuildFiles(uri)
+  return prepareConfigFiles(uri)
     .then(() => pickFile('Full path to compiler executable', C.COMPILER.get(uri), true, true, false, 1, 4))
-    .then(newCompiler => C.COMPILER.set(uri, newCompiler))
+    .then(newCompiler => {
+      const oldCompiler = C.COMPILER.get(uri);
+      if (newCompiler && (oldCompiler !== newCompiler)) {
+        C.REPORTER_ARGS.set(uri, [getSizeFormat(uri, dirname(newCompiler))]);
+      }
+      C.COMPILER.set(uri, newCompiler);
+    })
 
     .then(() => pickFile('Full path to programmer executable', C.PROGRAMMER.get(uri), true, true, false, 2, 4))
     .then(newProgrammer => C.PROGRAMMER.set(uri, newProgrammer))
@@ -38,10 +45,10 @@ export async function setupDevice(): Promise<void> {
   const devTypes = await listTypes(folder.uri, '-p?');
   const cut = (s: string): string => s.split(/\s+/, 1)[0].toLowerCase();
 
-  pickOne('Device type', devTypes, item => cut(item.label) === C.DEVICE_TYPE.get(folder.uri), 1, 2)
+  return pickOne('Device type', devTypes, item => cut(item.label) === C.DEVICE_TYPE.get(folder.uri), 1, 2)
     .then(newDevType => cut(newDevType.label))
     .then(newDevType => C.DEVICE_TYPE.set(folder.uri, newDevType))
-    .then(() => pickNumber('Device frequency', C.DEVICE_FREQ.get(folder.uri), true, 2, 2))
+    .then(() => pickNumber('Device frequency', C.DEVICE_FREQ.get(folder.uri), false, 2, 2))
     .then(newFrequency => C.DEVICE_FREQ.set(folder.uri, newFrequency))
     .catch(console.trace);
 }
@@ -50,7 +57,7 @@ export async function setupProgrammer(): Promise<void> {
   const folder = await pickFolder();
   const progTypes = await listTypes(folder.uri, '-c?');
 
-  pickOne('Programmer type', progTypes, item => item.description?.toLowerCase() === C.PROG_TYPE.get(folder.uri), 1, 3)
+  return pickOne('Programmer type', progTypes, item => item.description?.toLowerCase() === C.PROG_TYPE.get(folder.uri), 1, 3)
     .then(newProgType => newProgType.description?.toLowerCase())
     .then(newProgType => C.PROG_TYPE.set(folder.uri, newProgType))
     .then(() => pickString('Upload port', C.PROG_PORT.get(folder.uri), false, 2, 3))
@@ -60,11 +67,7 @@ export async function setupProgrammer(): Promise<void> {
     .catch(console.trace);
 }
 
-async function prepareBuildFiles(uri: Uri): Promise<void> {
-  fs
-    .stat(getMakeProps(uri.fsPath))
-    .then(() => fs.stat(getCCppProps(uri.fsPath)))
-    .then(() => {}, () => propagateSettings(uri))
-    .then(() => fs.stat(getMakeTargets(uri.fsPath)))
-    .then(() => {}, () => fs.copyFile(getDefaultMakeTargets(), getMakeTargets(uri.fsPath)));
+async function prepareConfigFiles(uri: Uri): Promise<void> {
+  return fs.stat(getCCppProps(uri.fsPath))
+    .then(() => {}, () => propagateSettings(uri));
 }
