@@ -8,7 +8,6 @@ module.exports = require('webpack-merge').merge(require('./webpack.config'),
     mode: "development",
     devtool: "inline-source-map",
     entry: {
-      'test/index': './src/test/index',
       'test/runner': './src/test/runner',
       'test/wrapper': './src/test/wrapper'
     }

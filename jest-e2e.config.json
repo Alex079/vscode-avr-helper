@@ -1,0 +1,7 @@
+{
+  "preset": "ts-jest",
+  "rootDir": "src/test",
+  "verbose": true,
+  "testEnvironment": "./jest-vscode-environment.ts",
+  "setupFilesAfterEnv": ["./jest-vscode-module.ts"]
+}

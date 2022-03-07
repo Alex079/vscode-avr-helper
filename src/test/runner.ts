@@ -1,17 +1,6 @@
-import * as Mocha from 'mocha';
-import * as path from 'path';
+import { join } from 'path';
+import { run as runCLI } from 'jest';
 
-export async function run(): Promise<void> {
-  try {
-    new Mocha({ ui: 'tdd', color: true })
-      .addFile(path.resolve(__dirname, 'index'))
-      .run(failures => {
-        if (failures > 0) {
-          throw Error(`${failures} tests failed.`);
-        }
-      });
-  }
-  catch (e) {
-    console.error(e);
-  }
+export function run(): Promise<void> {
+  return runCLI([`--config=${join(__dirname, '..', '..', 'jest-e2e.config.json')}`]);
 }

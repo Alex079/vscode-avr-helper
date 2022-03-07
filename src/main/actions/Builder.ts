@@ -5,9 +5,8 @@ import * as C from '../utils/Conf';
 import { getOutputElf, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
 import { pickFolder, pickOne } from "../presentation/Inputs";
 import { fdir } from "fdir";
-import { basename, dirname, join, normalize } from 'path';
+import { basename, dirname, join, normalize, sep } from 'path';
 import { AvrBuildTaskTerminal } from './BuildTerminal';
-import path = require('path');
 
 const GOALS: string[] = ['build', 'clean', 'scan'];
 
@@ -79,7 +78,9 @@ const dispatch = (uri: Uri) => (goal: string): void => {
       break;
     case 'clean':
       tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🧹 Clean "${uri.fsPath}" (${new Date()})`, 'AVR Helper',
-        new CustomExecution(async () => new AvrBuildTaskTerminal(emitter => clean(uri, emitter)))
+        new CustomExecution(async () => new AvrBuildTaskTerminal(emitter =>
+          clean(uri, emitter)
+        ))
       ));
       break;
     case 'build':
@@ -309,7 +310,7 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
 function printInfo(uri: Uri, emitter: EventEmitter<string>) {
   return (linkables: Linkable[]): void => {
     linkables.forEach((linkable, index) => {
-      const search: string = `${uri.fsPath}${path.sep}`;
+      const search: string = `${uri.fsPath}${sep}`;
       emitter.fire(`${index === 0 ? ' ' : '│'} ┌─${linkable.source.replace(search, '')}\n`);
       emitter.fire(`${index === 0 ? '┌' : '├'}─${linkable.needsRebuilding ? '✖' : '┴'}─${linkable.target.replace(search, '')}\n`);
       emitter.fire('│\n');
