@@ -1,7 +1,7 @@
 ## v2.0.0
 
 - AVR Helper extension is using built-in build system which should be compatible with all platforms; `make` is not required anymore
-- `avr-gcc`, `avr-objdump`, `avr-size` arguments and source folder scanner parameters can be configured in AVR Helper extension settings
+- `avr-gcc`, `avr-objdump`, `avr-size`, `avrdude` arguments and source/library folder scanner parameters can be configured in AVR Helper extension settings
 - AVR Helper extension can auto-detect `avr-size` arguments specific to Atmel version
 - MCU frequency is made optional
 - Various bugfixes
