@@ -19,20 +19,21 @@ class Conf {
   }
 }
 
-export const COMPILER: Conf = new Conf('AVR.source', 'compiler');
-export const C_STD: Conf = new Conf('AVR.source', 'standard.C');
-export const CPP_STD: Conf = new Conf('AVR.source', 'standard.C++');
-export const COMPILER_ARGS: Conf = new Conf('AVR.source', 'arguments.compiler');
-export const LINKER_ARGS: Conf = new Conf('AVR.source', 'arguments.linker');
-export const DISASM_ARGS: Conf = new Conf('AVR.source', 'arguments.disassembler');
-export const REPORTER_ARGS: Conf = new Conf('AVR.source', 'arguments.reporter');
-export const HIGHLIGHT: Conf = new Conf('AVR.source', 'highlight');
-export const LIBRARIES: Conf = new Conf('AVR.source', 'libraries');
-export const MAX_DEPTH: Conf = new Conf('AVR.source', 'crawler.max.depth');
-export const DEVICE_TYPE: Conf = new Conf('AVR.device', 'type');
-export const DEVICE_FREQ: Conf = new Conf('AVR.device', 'frequency');
-export const PROGRAMMER: Conf = new Conf('AVR.programmer', 'tool');
-export const PROG_DEFS: Conf = new Conf('AVR.programmer', 'definitions');
-export const PROG_TYPE: Conf = new Conf('AVR.programmer', 'type');
-export const PROG_PORT: Conf = new Conf('AVR.programmer', 'port');
-export const PROG_RATE: Conf = new Conf('AVR.programmer', 'rate');
+export const COMPILER = new Conf('AVR.source', 'compiler');
+export const C_STD = new Conf('AVR.source', 'standard.C');
+export const CPP_STD = new Conf('AVR.source', 'standard.C++');
+export const COMPILER_ARGS = new Conf('AVR.source', 'arguments.compiler');
+export const LINKER_ARGS = new Conf('AVR.source', 'arguments.linker');
+export const DISASM_ARGS = new Conf('AVR.source', 'arguments.disassembler');
+export const REPORTER_ARGS = new Conf('AVR.source', 'arguments.reporter');
+export const HIGHLIGHT = new Conf('AVR.source', 'highlight');
+export const LIBRARIES = new Conf('AVR.source', 'libraries');
+export const MAX_DEPTH = new Conf('AVR.source', 'crawler.max.depth');
+export const DEVICE_TYPE = new Conf('AVR.device', 'type');
+export const DEVICE_FREQ = new Conf('AVR.device', 'frequency');
+export const PROGRAMMER = new Conf('AVR.programmer', 'tool');
+export const PROGRAMMER_ARGS = new Conf('AVR.programmer', 'arguments');
+export const PROG_DEFS = new Conf('AVR.programmer', 'definitions');
+export const PROG_TYPE = new Conf('AVR.programmer', 'type');
+export const PROG_PORT = new Conf('AVR.programmer', 'port');
+export const PROG_RATE = new Conf('AVR.programmer', 'rate');

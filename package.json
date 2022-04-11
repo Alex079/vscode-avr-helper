@@ -149,6 +149,15 @@
 						"scope": "resource",
 						"description": "Path to programmer tool (avrdude)"
 					},
+					"AVR.programmer.arguments": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [],
+						"scope": "resource",
+						"description": "Programmer arguments"
+					},
 					"AVR.programmer.definitions": {
 						"type": "string",
 						"default": "",
