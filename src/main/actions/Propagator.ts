@@ -33,32 +33,24 @@ function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): Promis
 }
 
 export function propagateSettings(uri: Uri): Promise<void> {
-  const compiler: string | undefined = C.COMPILER.get(uri);
-  const cStandard: string | undefined = C.C_STD.get(uri);
-  const cppStandard: string | undefined = C.CPP_STD.get(uri);
+  const compiler: string = C.COMPILER.get(uri) || '';
+  const cStandard: string = C.C_STD.get(uri) || DEFAULT;
+  const cppStandard: string = C.CPP_STD.get(uri) || DEFAULT;
   const compilerArgs: string[] = C.COMPILER_ARGS.get(uri) ?? [];
   const libraries: string[] = C.LIBRARIES.get(uri) ?? [];
   const deviceType: string | undefined = C.DEVICE_TYPE.get(uri);
   const deviceFreq: number | undefined = C.DEVICE_FREQ.get(uri);
   return mutateCCppProperties(uri, conf => {
-    conf.compilerPath = compiler ?? '';
-    if (cStandard) {
-      conf.cStandard = cStandard;
-    } else {
-      conf.cStandard = DEFAULT;
-    }
-    if (cppStandard) {
-      conf.cppStandard = cppStandard;
-    } else {
-      conf.cppStandard = DEFAULT;
-    }
+    conf.compilerPath = compiler;
+    conf.cStandard = cStandard;
+    conf.cppStandard = cppStandard;
     conf.includePath = libraries.map(lib => join(lib, '**'));
+    conf.compilerArgs = [...compilerArgs];
     if (deviceType) {
-      compilerArgs.push(`-mmcu=${deviceType}`);
+      conf.compilerArgs.push(`-mmcu=${deviceType}`);
     }
     if (deviceFreq) {
-      compilerArgs.push(`-DF_CPU=${deviceFreq}UL`);
+      conf.compilerArgs.push(`-DF_CPU=${deviceFreq}UL`);
     }
-    conf.compilerArgs = compilerArgs;
   });
 }

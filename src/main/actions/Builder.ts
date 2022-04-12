@@ -114,7 +114,6 @@ function getDependencies(uri: Uri) {
   return async (src: Sources): Promise<string[]> => {
     const exe: string | undefined = C.COMPILER.get(uri);
     const devType: string | undefined = C.DEVICE_TYPE.get(uri);
-    const devFrequency: number | undefined = C.DEVICE_FREQ.get(uri);
     if (!exe || !devType) {
       return [];
     }
@@ -122,6 +121,7 @@ function getDependencies(uri: Uri) {
       '-MM',
       `-mmcu=${devType}`
     ];
+    const devFrequency: number | undefined = C.DEVICE_FREQ.get(uri);
     if (devFrequency) {
       args.push(`-DF_CPU=${devFrequency}UL`);
     }
@@ -212,13 +212,13 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
   return async (linkables: Linkable[]): Promise<void> => {
     const exe: string | undefined = C.COMPILER.get(uri);
     const devType: string | undefined = C.DEVICE_TYPE.get(uri);
-    const devFrequency: number | undefined = C.DEVICE_FREQ.get(uri);
     if (!exe || !devType) {
       return;
     }
     const mcuArgs = [
       `-mmcu=${devType}`
     ];
+    const devFrequency: number | undefined = C.DEVICE_FREQ.get(uri);
     if (devFrequency) {
       mcuArgs.push(`-DF_CPU=${devFrequency}UL`);
     }
