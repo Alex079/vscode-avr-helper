@@ -94,12 +94,13 @@ function flashAreas(folder: WorkspaceFolder, outputFile: string) {
     if (!exe || !progType || !devType) {
       return;
     }
-    const args: string[] = C.PROGRAMMER_ARGS.get(folder.uri) ?? [];
-    args.push(
+    const additionalArgs: string[] = C.PROGRAMMER_ARGS.get(folder.uri) ?? [];
+    const args = [
+      ...additionalArgs,
       '-v',
       '-p', devType,
       '-c', progType
-    );
+    ];
     const defs: string | undefined = C.PROG_DEFS.get(folder.uri);
     if (defs) {
       args.push('-C', defs);
