@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import { Disposable, QuickPickItem, window, workspace, WorkspaceFolder } from 'vscode';
+import { showAndReject } from '../utils/ErrorHandler';
 import { getPlusIcon } from '../utils/Files';
 
 export async function pickFolder(): Promise<WorkspaceFolder> {
@@ -17,14 +18,14 @@ export async function pickFolder(): Promise<WorkspaceFolder> {
       default: return window
         .showWorkspaceFolderPick({ ignoreFocusOut: true })
         .then(folder => {
-          if (!folder) {
-            throw new Error('Interrupted');
+          if (folder) {
+            return folder;
           }
-          return folder;
+          return Promise.reject('Interrupted');
         });
     }
   }
-  throw new Error('No folder');
+  return showAndReject('No open folders');
 }
 
 export async function pickFile(placeholder: string, value: string | undefined,

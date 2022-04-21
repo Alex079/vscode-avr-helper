@@ -60,41 +60,51 @@ export function performBuildTask(): Promise<void> {
         .then(fromItem)
         .then(dispatch(folder.uri))
     )
-    .catch(console.info);
+    .catch(console.log);
 }
 
 const dispatch = (uri: Uri) => (goal: string): void => {
   switch (goal) {
     case 'scan':
-      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔍 Scan "${uri.fsPath}" (${new Date()})`, 'AVR Helper',
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔍 Scan "${uri.fsPath}" ${new Date()}`, 'AVR Helper',
         new CustomExecution(async () => new AvrBuildTaskTerminal(emitter =>
           getSources(uri)
             .then(getDependencies(uri))
             .then(getLinkables(uri))
             .then(printInfo(uri, emitter))
-            .catch(console.error)
+            .catch(handleBuildError(uri))
         ))
       ));
       break;
     case 'clean':
-      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🧹 Clean "${uri.fsPath}" (${new Date()})`, 'AVR Helper',
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🧹 Clean "${uri.fsPath}" ${new Date()}`, 'AVR Helper',
         new CustomExecution(async () => new AvrBuildTaskTerminal(emitter =>
           clean(uri, emitter)
         ))
       ));
       break;
     case 'build':
-      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔧 Build "${uri.fsPath}" (${new Date()})`, 'AVR Helper',
+      tasks.executeTask(new Task({type: 'AVR.build'}, workspace.getWorkspaceFolder(uri) ?? TaskScope.Workspace, `🔧 Build "${uri.fsPath}" ${new Date()}`, 'AVR Helper',
         new CustomExecution(async () => new AvrBuildTaskTerminal(emitter =>
           getSources(uri)
             .then(getDependencies(uri))
             .then(getLinkables(uri))
             .then(build(uri, emitter))
-            .catch(console.error)
+            .catch(handleBuildError(uri))
         )), C.HIGHLIGHT.get(uri) ? '$gcc' : undefined
       ));
       break;
   }
+};
+
+const handleBuildError = (uri: Uri) => (reason: object): void => {
+  console.log(`${reason}`);
+  window.showErrorMessage(`${reason}`, ...GOALS)
+    .then(goal => {
+      if (goal) {
+        dispatch(uri)(goal);
+      }
+    });
 };
 
 function clean(uri: Uri, emitter: EventEmitter<string>): Promise<void> {
@@ -133,16 +143,12 @@ function getDependencies(uri: Uri) {
     while (toBeChecked.length > 0) {
       const info = spawnSync(exe, [...args, ...toBeChecked], { cwd: uri.fsPath });
       if (info.error) {
-        console.error(`${info.error.message}`);
-        window.showErrorMessage(`Error: cannot collect dependencies. ${info.error.message}`);
-        throw new Error(info.error.message);
+        return Promise.reject(`Error: cannot collect dependencies. ${info.error.message}`);
       }
       if (info.status && info.status > 0) {
-        console.warn(`${info.stderr.toString()}`);
-        window.showWarningMessage(`Error ${info.status}: cannot collect dependencies. ${info.stderr.toString()}`);
-        throw new Error(info.stderr.toString());
+        return Promise.reject(`Error ${info.status}: cannot collect dependencies. ${info.stderr.toString()}`);
       }
-      console.info(`${info.stderr.toString()}`);
+      console.log(`${info.stderr.toString()}`);
       const newResult = info.stdout.toString()
         .replace(/\\ /g, '\u0000')
         .replace(/\\[\r\n]+/g, ' ')

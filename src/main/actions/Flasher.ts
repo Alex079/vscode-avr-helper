@@ -1,31 +1,33 @@
-import { QuickPickItem, ShellExecution, Task, tasks, Uri, window, WorkspaceFolder } from 'vscode';
+import { QuickPickItem, ShellExecution, Task, tasks, Uri, WorkspaceFolder } from 'vscode';
 import { spawnSync } from "child_process";
 import { getOutputElf } from "../utils/Files";
 import { pickFolder, pickMany } from "../presentation/Inputs";
 import { promises as fs } from 'fs';
 import * as C from '../utils/Conf';
+import { showAndReject } from '../utils/ErrorHandler';
 
 const ERASE: string = '(erase chip)';
 const toItem = (i: string): QuickPickItem => ({ label: i });
 const fromItem = (i: QuickPickItem): string => i.label;
 
 export function performFlashTask(): Promise<void> {
-  return pickFolder().then(folder => {
-    const outputFile = getOutputElf(folder.uri.fsPath);
-    fs.stat(outputFile)
-      .then(stats => {
-        if (stats.isFile()) {
-          return getDeviceInfo(folder.uri).split('\n');
-        }
-        throw new Error(`${outputFile} is not a file`);
-      })
-      .then(parseMemoryAreas)
-      .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), () => false))
-      .then(areas => areas.map(fromItem))
-      .then(flashAreas(folder, outputFile))
-      .catch(reason => window.showErrorMessage(reason.toString()));
-  })
-  .catch(console.trace);
+  return pickFolder()
+    .then(folder => {
+      const outputFile = getOutputElf(folder.uri.fsPath);
+      return fs.stat(outputFile)
+        .then(stats => {
+          if (stats.isFile()) {
+            return getDeviceInfo(folder.uri).split('\n');
+          }
+          return Promise.reject(`${outputFile} is not a file`);
+        })
+        .catch(showAndReject)
+        .then(parseMemoryAreas)
+        .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), () => false))
+        .then(areas => areas.map(fromItem))
+        .then(flashAreas(folder, outputFile));
+    })
+    .catch(console.log);
 }
 
 function getDeviceInfo(uri: Uri): string {

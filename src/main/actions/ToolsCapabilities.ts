@@ -23,7 +23,7 @@ export async function getProperties(uri: Uri, kind: string): Promise<string> {
 export function getSizeFormat(uri: Uri, baseFolder: string): string {
   const info = spawnSync(join(baseFolder, 'avr-size'), ['-h'], { cwd: uri.fsPath });
   if (info.error) {
-    console.warn(info.error.message);
+    console.log(info.error.message);
     return '-A';
   }
   return info.stderr.toString().includes('-C') ? '-C' : '-A';

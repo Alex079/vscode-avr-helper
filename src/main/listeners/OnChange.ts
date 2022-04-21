@@ -18,7 +18,7 @@ export function onChangeConfiguration(event: ConfigurationChangeEvent): void {
         event.affectsConfiguration(C.DEVICE_TYPE.name(), uri) ||
         event.affectsConfiguration(C.DEVICE_FREQ.name(), uri)) {
       propagateSettings(uri)
-        .catch(reason => window.showErrorMessage(reason.toString()));
+        .catch(console.error);
     }
   });
 }

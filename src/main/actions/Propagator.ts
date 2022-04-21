@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import { dirname, join } from 'path';
 import { Uri } from 'vscode';
 import * as C from '../utils/Conf';
+import { showAndReject } from '../utils/ErrorHandler';
 import { getCCppProps } from '../utils/Files';
 
 const avrFilter = (c: any) => c.name === 'AVR';
@@ -29,7 +30,8 @@ function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): Promis
       properties.configurations.filter(avrFilter).forEach(mutator);
       return JSON.stringify(properties, undefined, '    ');
     })
-    .then(str => fs.writeFile(name, str));
+    .then(str => fs.writeFile(name, str))
+    .catch(showAndReject);
 }
 
 export function propagateSettings(uri: Uri): Promise<void> {
