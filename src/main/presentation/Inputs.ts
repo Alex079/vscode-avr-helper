@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
-import { Disposable, QuickPickItem, window, workspace, WorkspaceFolder } from 'vscode';
-import { showAndReject } from '../utils/ErrorHandler';
+import { Disposable, QuickPickItem, WorkspaceFolder, window, workspace } from 'vscode';
 import { getPlusIcon } from '../utils/Files';
 
 export async function pickFolder(): Promise<WorkspaceFolder> {
@@ -21,11 +20,13 @@ export async function pickFolder(): Promise<WorkspaceFolder> {
           if (folder) {
             return folder;
           }
-          return Promise.reject('Interrupted');
+          throw new Error('Interrupted');
         });
     }
   }
-  return showAndReject('No open folders');
+  const reason = 'No open folder';
+  window.showErrorMessage(reason);
+  throw new Error(reason);
 }
 
 export async function pickFile(placeholder: string, value: string | undefined,
@@ -43,7 +44,7 @@ export async function pickFile(placeholder: string, value: string | undefined,
   const disposables: Disposable[] = [];
   return new Promise<string | undefined>((resolve, reject) => {
     disposables.push(
-      input.onDidHide(() => reject('Interrupted')),
+      input.onDidHide(() => reject(new Error('Interrupted'))),
       input.onDidAccept(() => {
         if (input.value) {
           fs.stat(input.value)
@@ -101,7 +102,7 @@ export async function pickFiles(placeholder: string, value: string[] | undefined
   const disposables: Disposable[] = [];
   return new Promise<string[]>((resolve, reject) => {
     disposables.push(
-      picker.onDidHide(() => reject('Interrupted')),
+      picker.onDidHide(() => reject(new Error('Interrupted'))),
       picker.onDidAccept(() => {
         const inputValue = picker.value.trim();
         if (inputValue) {
@@ -153,7 +154,7 @@ export async function pickFiles(placeholder: string, value: string[] | undefined
 export async function pickNumber(placeholder: string, value: number | undefined, required: boolean,
                       step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<number | undefined> {
   const input = window.createInputBox();
-  if (value) {
+  if (value !== null && value !== undefined) {
     input.value = value.toString();
   }
   input.ignoreFocusOut = true;
@@ -163,7 +164,7 @@ export async function pickNumber(placeholder: string, value: number | undefined,
   const disposables: Disposable[] = [];
   return new Promise<number | undefined>((resolve, reject) => {
     disposables.push(
-      input.onDidHide(() => reject('Interrupted')),
+      input.onDidHide(() => reject(new Error('Interrupted'))),
       input.onDidAccept(() => {
         if (isNaN(+input.value)) {
           input.validationMessage = 'Must be a number';
@@ -199,7 +200,7 @@ export async function pickString(placeholder: string, value: string | undefined,
   const disposables: Disposable[] = [];
   return new Promise<string | undefined>((resolve, reject) => {
     disposables.push(
-      input.onDidHide(() => reject('Interrupted')),
+      input.onDidHide(() => reject(new Error('Interrupted'))),
       input.onDidAccept(() => {
         if (input.value) {
           resolve(input.value);
@@ -232,7 +233,7 @@ export async function pickOne(placeholder: string, items: QuickPickItem[], activ
   const disposables: Disposable[] = [];
   return new Promise<QuickPickItem>((resolve, reject) => {
     disposables.push(
-      picker.onDidHide(() => reject('Interrupted')),
+      picker.onDidHide(() => reject(new Error('Interrupted'))),
       picker.onDidAccept(() => {
         if (picker.selectedItems.length) {
           resolve(picker.selectedItems[0]);
@@ -259,7 +260,7 @@ export async function pickMany(placeholder: string, items: QuickPickItem[], acti
   const disposables: Disposable[] = [];
   return new Promise<readonly QuickPickItem[]>((resolve, reject) => {
     disposables.push(
-      picker.onDidHide(() => reject('Interrupted')),
+      picker.onDidHide(() => reject(new Error('Interrupted'))),
       picker.onDidAccept(() => {
         if (picker.selectedItems.length) {
           resolve(picker.selectedItems);

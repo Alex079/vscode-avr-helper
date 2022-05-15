@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 //@ts-check
 
 'use strict';
@@ -7,8 +8,8 @@ const nodeExternals = require('webpack-node-externals');
 
 /**@type {import('webpack').Configuration}*/
 module.exports = {
-  mode: "production",
-  devtool: 'source-map',
+  mode: "none",
+  devtool: 'inline-source-map',
   target: 'node',
   node: {
     __dirname: false,
@@ -40,5 +41,8 @@ module.exports = {
         loader: 'ts-loader'
       }
     ]
+  },
+  infrastructureLogging: {
+    level: "log"
   }
 };

@@ -1,10 +1,10 @@
-import { QuickPickItem, ShellExecution, Task, tasks, Uri, WorkspaceFolder } from 'vscode';
+import { QuickPickItem, ShellExecution, Task, Uri, WorkspaceFolder, tasks, window } from 'vscode';
 import { spawnSync } from "child_process";
 import { getOutputElf } from "../utils/Files";
 import { pickFolder, pickMany } from "../presentation/Inputs";
 import { promises as fs } from 'fs';
 import * as C from '../utils/Conf';
-import { showAndReject } from '../utils/ErrorHandler';
+import { showMessageAndThrowError } from '../utils/ErrorHandler';
 
 const ERASE: string = '(erase chip)';
 const toItem = (i: string): QuickPickItem => ({ label: i });
@@ -19,9 +19,9 @@ export function performFlashTask(): Promise<void> {
           if (stats.isFile()) {
             return getDeviceInfo(folder.uri).split('\n');
           }
-          return Promise.reject(`${outputFile} is not a file`);
+          throw new Error(`${outputFile} is not a file`);
         })
-        .catch(showAndReject)
+        .catch(showMessageAndThrowError)
         .then(parseMemoryAreas)
         .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), () => false))
         .then(areas => areas.map(fromItem))

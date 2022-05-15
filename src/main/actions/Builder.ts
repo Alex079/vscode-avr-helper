@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import { spawnSync } from "child_process";
-import { CustomExecution, EventEmitter, QuickPickItem, Task, tasks, TaskScope, Uri, window, workspace } from "vscode";
+import { CustomExecution, EventEmitter, QuickPickItem, Task, TaskScope, Uri, tasks, window, workspace } from "vscode";
 import * as C from '../utils/Conf';
 import { getOutputElf, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
 import { pickFolder, pickOne } from "../presentation/Inputs";
@@ -143,10 +143,10 @@ function getDependencies(uri: Uri) {
     while (toBeChecked.length > 0) {
       const info = spawnSync(exe, [...args, ...toBeChecked], { cwd: uri.fsPath });
       if (info.error) {
-        return Promise.reject(`Error: cannot collect dependencies. ${info.error.message}`);
+        throw new Error(`Error: cannot collect dependencies. ${info.error.message}`);
       }
       if (info.status && info.status > 0) {
-        return Promise.reject(`Error ${info.status}: cannot collect dependencies. ${info.stderr.toString()}`);
+        throw new Error(`Error ${info.status}: cannot collect dependencies. ${info.stderr.toString()}`);
       }
       console.log(`${info.stderr.toString()}`);
       const newResult = info.stdout.toString()

@@ -7,14 +7,14 @@ import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from
 import { propagateSettings } from './Propagator';
 import { getProperties, getSizeFormat } from './ToolsCapabilities';
 import { dirname } from 'path';
-import { showAndReject } from '../utils/ErrorHandler';
+import { showMessageAndGetError, showMessageAndThrowError } from '../utils/ErrorHandler';
 
 function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
   return getProperties(uri, kind)
     .then(parseProperties)
     .then(properties => Object.entries<string>(properties))
     .then(properties => properties.map( ([ description, label ]) => ({ description, label }) ))
-    .catch(showAndReject);
+    .catch(showMessageAndThrowError);
 }
 
 export function setupTools(): Promise<void> {

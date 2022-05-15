@@ -5,29 +5,27 @@
       "name": "Launch Extension",
       "type": "extensionHost",
       "request": "launch",
-      "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/**/*.js"
       ],
-      "preLaunchTask": "npm: build"
+      "preLaunchTask": "npm: compile"
     },
     {
-      "name": "Extension Tests",
+      "name": "Test Modules",
       "type": "extensionHost",
       "request": "launch",
-      "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionTestsPath=${workspaceFolder}/dist/test/runner",
-        "--launchArgs=${workspaceFolder}/dist/test/workspace"
+        "--extensionTestsPath=${workspaceFolder}/out/test",
+        "--launchArgs=${workspaceFolder}/out/test"
       ],
       "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
+        "${workspaceFolder}/out/test/**/*.test.js"
       ],
-      "preLaunchTask": "npm: build"
+      "preLaunchTask": "npm: compile-tests"
     }
   ]
 }
