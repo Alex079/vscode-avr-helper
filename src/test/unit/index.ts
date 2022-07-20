@@ -3,13 +3,13 @@ import * as glob from 'glob';
 import { join } from 'path';
 
 export function run(): Promise<void> {
-	const mocha = new Mocha({
-		ui: 'tdd',
+  const mocha = new Mocha({
+    ui: 'tdd',
     allowUncaught: true,
-		color: true,
+    color: true,
     timeout: 10000
-	});
-	const testsRoot = __dirname;
+  });
+  const testsRoot = __dirname;
   console.log(testsRoot);
   return new Promise((resolve, reject) => {
     glob('**/*.test.js', { cwd: testsRoot }, (error, matches) => {
