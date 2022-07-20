@@ -7,7 +7,7 @@ import { pickFile, pickFiles, pickFolder, pickNumber, pickOne, pickString } from
 import { propagateSettings } from './Propagator';
 import { getProperties, getSizeFormat } from './ToolsCapabilities';
 import { dirname } from 'path';
-import { showMessageAndGetError, showMessageAndThrowError } from '../utils/ErrorHandler';
+import { showMessageAndThrowError } from '../utils/ErrorHandler';
 
 function listTypes(uri: Uri, kind: string): Promise<QuickPickItem[]> {
   return getProperties(uri, kind)

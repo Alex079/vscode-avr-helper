@@ -1,4 +1,4 @@
-import { QuickPickItem, ShellExecution, Task, Uri, WorkspaceFolder, tasks, window } from 'vscode';
+import { QuickPickItem, ShellExecution, Task, Uri, WorkspaceFolder, tasks } from 'vscode';
 import { spawnSync } from "child_process";
 import { getOutputElf } from "../utils/Files";
 import { pickFolder, pickMany } from "../presentation/Inputs";

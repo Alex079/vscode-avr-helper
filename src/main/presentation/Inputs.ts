@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import { Disposable, QuickPickItem, WorkspaceFolder, window, workspace } from 'vscode';
+import { showMessageAndGetError } from '../utils/ErrorHandler';
 import { getPlusIcon } from '../utils/Files';
 
 export async function pickFolder(): Promise<WorkspaceFolder> {
@@ -24,9 +25,7 @@ export async function pickFolder(): Promise<WorkspaceFolder> {
         });
     }
   }
-  const reason = 'No open folder';
-  window.showErrorMessage(reason);
-  throw new Error(reason);
+  throw showMessageAndGetError('No open folder');
 }
 
 export async function pickFile(placeholder: string, value: string | undefined,
