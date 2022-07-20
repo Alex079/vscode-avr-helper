@@ -11,25 +11,20 @@ describe('Status bar test suite', () => {
   let ws: string;
   let bin: string;
 
-  before('Browser', async () => {
-    browser = VSBrowser.instance;
-    driver = browser.driver;
-  });
-
-  before('Fake workspace', async () => {
+  const fakeWorkspace = async () => {
     ws = await fs
       .mkdtemp(join(tmpdir(), 'avr-helper-test-'))
-      .then(async dir => {
+      .then(async (dir) => {
         await fs.writeFile(join(dir, 'main.cpp'), 'int main() {return 0;}');
         return dir;
       });
     console.log('Workspace: ' + ws);
-  });
+  };
 
-  before('Fake binaries', async () => {
+  const fakeBinaries = async () => {
     bin = await fs
       .mkdtemp(join(tmpdir(), 'avr-helper-test-'))
-      .then(async dir => {
+      .then(async (dir) => {
         await fs.writeFile(join(dir, 'avr-gcc'), 'echo stub');
         await fs.writeFile(join(dir, 'avr-objdump'), 'echo stub');
         await fs.writeFile(join(dir, 'avr-size'), 'echo stub');
@@ -37,7 +32,16 @@ describe('Status bar test suite', () => {
         return dir;
       });
     console.log('Binaries: ' + bin);
+  };
+
+  before('Browser', async () => {
+    browser = VSBrowser.instance;
+    driver = browser.driver;
   });
+
+  before('Fake workspace', fakeWorkspace);
+
+  before('Fake binaries', fakeBinaries);
 
   it('AVR settings', async () => {
     browser.openResources(ws);
