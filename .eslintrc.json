@@ -2,21 +2,27 @@
     "root": true,
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": 2019,
+        "ecmaVersion": 2021,
         "sourceType": "module"
     },
     "plugins": [
         "@typescript-eslint"
     ],
     "rules": {
+        "@typescript-eslint/naming-convention": "warn",
+        "@typescript-eslint/semi": "warn",
         "curly": "warn",
         "eqeqeq": "warn",
         "no-throw-literal": "warn",
         "semi": "warn",
         "no-unused-expressions": "warn",
         "sort-imports": ["warn", {
-            "ignoreCase": true,
             "ignoreDeclarationSort": true
         }]
-    }
+    },
+    "ignorePatterns": [
+        "out",
+        "dist",
+        "**/*.d.ts"
+    ]
 }

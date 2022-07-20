@@ -1,4 +1,4 @@
-import { commands, StatusBarItem, Uri, window } from 'vscode';
+import { StatusBarItem, Uri, commands, window } from 'vscode';
 import * as C from '../utils/Conf';
 import { getContext } from '../utils/Context';
 import { setupDevice, setupProgrammer, setupTools } from '../actions/SetupTools';
@@ -116,10 +116,10 @@ export const updateFlashItem = (uri: Uri | undefined) => {
 };
 
 const getSetupDeviceItemText = (uri: Uri): string =>
-  !!C.COMPILER.get(uri) && !!C.PROGRAMMER.get(uri) ? `${C.DEVICE_TYPE.get(uri) || '-'} | ${C.DEVICE_FREQ.get(uri) || '-'} Hz` : '';
+  !!C.COMPILER.get(uri) && !!C.PROGRAMMER.get(uri) ? `${C.DEVICE_TYPE.get(uri) || '-'} | ${C.DEVICE_FREQ.get(uri) ?? '-'} Hz` : '';
 
 const getSetupProgrammerItemText = (uri: Uri): string =>
-  !!C.PROGRAMMER.get(uri) ? `${C.PROG_TYPE.get(uri) || '-'} | ${C.PROG_PORT.get(uri) || '-'} | ${C.PROG_RATE.get(uri) || '-'} Baud` : '';
+  !!C.PROGRAMMER.get(uri) ? `${C.PROG_TYPE.get(uri) || '-'} | ${C.PROG_PORT.get(uri) || '-'} | ${C.PROG_RATE.get(uri) ?? '-'} Baud` : '';
 
 const getBuildItemFlag = (uri: Uri): boolean =>
   !!C.COMPILER.get(uri) && !!C.PROGRAMMER.get(uri) && !!C.DEVICE_TYPE.get(uri);

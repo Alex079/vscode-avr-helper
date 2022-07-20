@@ -221,33 +221,39 @@
 		]
 	},
 	"scripts": {
-		"dist": "webpack",
-		"build": "webpack --config webpack.dev.js",
-		"watch": "webpack --config webpack.dev.js --watch",
+		"package": "webpack --mode production --devtool source-map",
+		"compile": "webpack",
+		"watch": "webpack -w",
+		"compile-tests": "tsc",
+		"watch-tests": "tsc -w",
 		"lint": "eslint --ext .ts --fix src src",
-		"clean": "rm -rf dist *.vsix",
-		"test": "jest ; node dist/test/wrapper",
-		"verify": "yarn lint && yarn clean && yarn build && yarn test",
-		"vscode:prepublish": "yarn clean && yarn dist"
+		"clean": "rm -rf out dist *.vsix",
+		"unit-test": "node out/test/unit/wrapper",
+		"ui-test": "extest setup-and-run -s .vscode-test-ui -e out/extensions -m mocha.json 'out/test/ui/**/*.test.js'",
+		"test": "yarn run unit-test",
+		"pretest": "yarn run lint && rm -rf out && yarn run compile-tests",
+		"vscode:prepublish": "rm -rf dist *.vsix && yarn run package"
 	},
 	"dependencies": {
 		"fdir": "^5"
 	},
 	"devDependencies": {
-		"@types/jest": "^27",
+		"@types/glob": "^7",
+		"@types/mocha": "^9",
 		"@types/node": "^17",
 		"@types/vscode": "^1",
 		"@typescript-eslint/eslint-plugin": "^5",
 		"@typescript-eslint/parser": "^5",
 		"@vscode/test-electron": "^2",
 		"eslint": "^8",
-		"jest": "^27",
-		"ts-jest": "^27",
+		"glob": "^8",
+		"mocha": "^10",
 		"ts-loader": "^9",
+		"ts-node": "^10",
 		"typescript": "^4",
+		"vscode-extension-tester": "^4",
 		"webpack": "^5",
 		"webpack-cli": "^4",
-		"webpack-merge": "^5",
 		"webpack-node-externals": "^3"
 	}
 }

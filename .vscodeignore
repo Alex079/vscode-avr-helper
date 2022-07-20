@@ -1,12 +1,13 @@
 .gitignore
 .vscode/**
-.vscode-test/**
+.vscode-test*/**
 dist/test/**
 out/**
 src/**
 vsc-extension-quickstart.md
 **/webpack*.js
 **/tsconfig.json
+**/mocha.json
 **/.eslintrc.json
 **/*.map
 **/*.ts
