@@ -6,7 +6,7 @@ Helper extension to simplify code compilation and flashing for AVR chips. This e
 
 Demo: source highlighting and build.
 
-![Demo: source highlighting and build](https://github.com/Alex079/vscode-avr-helper/wiki/images/setup-and-build.gif)
+![Demo: source highlighting, building and flashing](https://github.com/Alex079/vscode-avr-helper/wiki/images/setup-build-flash-v2.gif)
 
 The AVR Helper adds five items to the window status bar:
 
