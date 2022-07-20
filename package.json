@@ -247,7 +247,7 @@
 		"@vscode/test-electron": "^2",
 		"eslint": "^8",
 		"glob": "^8",
-		"mocha": "^9",
+		"mocha": "^10",
 		"ts-loader": "^9",
 		"ts-node": "^10",
 		"typescript": "^4",
