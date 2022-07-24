@@ -20,15 +20,15 @@ class Conf {
 }
 
 export const COMPILER = new Conf('AVR.source', 'compiler');
-export const C_STD = new Conf('AVR.source', 'standard.C');
-export const CPP_STD = new Conf('AVR.source', 'standard.C++');
-export const COMPILER_ARGS = new Conf('AVR.source', 'arguments.compiler');
-export const LINKER_ARGS = new Conf('AVR.source', 'arguments.linker');
-export const DISASM_ARGS = new Conf('AVR.source', 'arguments.disassembler');
-export const REPORTER_ARGS = new Conf('AVR.source', 'arguments.reporter');
-export const HIGHLIGHT = new Conf('AVR.source', 'highlight');
 export const LIBRARIES = new Conf('AVR.source', 'libraries');
-export const MAX_DEPTH = new Conf('AVR.source', 'crawler.max.depth');
+export const MAX_DEPTH = new Conf('AVR.source', 'scanning depth');
+export const HIGHLIGHT = new Conf('AVR.source', 'highlight');
+export const COMPILER_ARGS = new Conf('AVR.compiler', 'arguments');
+export const LINKER_ARGS = new Conf('AVR.linker', 'arguments');
+export const DISASM_ARGS = new Conf('AVR.disassembler', 'arguments');
+export const REPORTER_ARGS = new Conf('AVR.reporter', 'arguments');
+export const C_STD = new Conf('AVR.compiler', 'C standard');
+export const CPP_STD = new Conf('AVR.compiler', 'C++ standard');
 export const DEVICE_TYPE = new Conf('AVR.device', 'type');
 export const DEVICE_FREQ = new Conf('AVR.device', 'frequency');
 export const PROGRAMMER = new Conf('AVR.programmer', 'tool');
