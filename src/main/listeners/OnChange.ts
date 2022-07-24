@@ -26,15 +26,15 @@ export function onChangeConfiguration(event: ConfigurationChangeEvent): void {
 function getCurrentUri(): Uri | undefined {
   const folders = workspace.workspaceFolders;
   if (folders) {
+    if (folders.length === 1) {
+      return folders[0].uri;
+    }
     const editorUri = window.activeTextEditor?.document.uri;
     if (editorUri) {
       const folder = workspace.getWorkspaceFolder(editorUri);
       if (folder) {
         return folder.uri;
       }
-    }
-    if (folders.length === 1) {
-      return folders[0].uri;
     }
   }
   return undefined;
