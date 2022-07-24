@@ -2,14 +2,13 @@ import * as assert from 'assert';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { InputBox, StatusBar, VSBrowser, WebDriver } from 'vscode-extension-tester';
+import { InputBox, StatusBar, VSBrowser } from 'vscode-extension-tester';
 
 describe('Status bar test suite', () => {
 
-  let browser: VSBrowser;
-  let driver: WebDriver;
   let ws: string;
   let bin: string;
+  let statusBar: StatusBar;
 
   const fakeWorkspace = async () => {
     ws = await fs
@@ -18,6 +17,7 @@ describe('Status bar test suite', () => {
         await fs.writeFile(join(dir, 'main.cpp'), 'int main() {return 0;}');
         return dir;
       });
+      /*await*/ VSBrowser.instance.openResources(ws);
     console.log('Workspace: ' + ws);
   };
 
@@ -34,36 +34,31 @@ describe('Status bar test suite', () => {
     console.log('Binaries: ' + bin);
   };
 
-  before('Browser', async () => {
-    browser = VSBrowser.instance;
-    driver = browser.driver;
-  });
-
   before('Fake workspace', fakeWorkspace);
 
   before('Fake binaries', fakeBinaries);
 
+  before('Statusbar', () => { statusBar = new StatusBar(); });
+
   it('AVR settings', async () => {
-    browser.openResources(ws);
-    await new StatusBar().wait(100)
-      .then(statusBar => driver.wait(() => statusBar.getItem('settings  AVR, Edit AVR configuration'), 1000))
+    await VSBrowser.instance.driver.wait(() => statusBar.getItem('settings  AVR, Edit AVR configuration'), 1000)
       .then(item => {
         assert.ok(item);
         item.click();
       });
-    await new InputBox().wait(100)
+    await InputBox.create()
       .then(box => box
         .setText(join(bin, 'avr-gcc'))
         .then(() => box.confirm())
       );
-    await new InputBox().wait(100)
+    await InputBox.create()
       .then(box => box
         .setText(join(bin, 'avrdude'))
         .then(() => box.confirm())
       );
-    await new InputBox().wait(100)
+    await InputBox.create()
       .then(box => box.confirm());
-    await new InputBox().wait(100)
+    await InputBox.create()
       .then(box => box.confirm());
     
     const settings = require(join(ws, '.vscode', 'settings.json'));

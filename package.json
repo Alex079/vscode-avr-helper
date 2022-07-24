@@ -230,7 +230,7 @@
 		"clean": "rm -rf out dist *.vsix",
 		"unit-test": "node out/test/unit/wrapper",
 		"ui-test": "extest setup-and-run -s .vscode-test-ui -e out/extensions -m mocha.json 'out/test/ui/**/*.test.js'",
-		"test": "yarn run unit-test",
+		"test": "yarn run unit-test && yarn run ui-test",
 		"pretest": "yarn run lint && rm -rf out && yarn run compile-tests",
 		"vscode:prepublish": "rm -rf dist *.vsix && yarn run package"
 	},
