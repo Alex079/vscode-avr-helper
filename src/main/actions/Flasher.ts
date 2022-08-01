@@ -31,9 +31,9 @@ export function performFlashTask(): Promise<void> {
 }
 
 function getDeviceInfo(uri: Uri): string {
-  const exe: string | undefined = C.PROGRAMMER.get(uri);
-  const progType: string | undefined = C.PROG_TYPE.get(uri);
-  const devType: string | undefined = C.DEVICE_TYPE.get(uri);
+  const exe = C.PROGRAMMER.get(uri);
+  const progType = C.PROG_TYPE.get(uri);
+  const devType = C.DEVICE_TYPE.get(uri);
   if (!exe || !progType || ! devType) {
     return '';
   }
@@ -42,15 +42,15 @@ function getDeviceInfo(uri: Uri): string {
     '-p', devType,
     '-c', progType
   ];
-  const defs: string | undefined = C.PROG_DEFS.get(uri);
+  const defs = C.PROG_DEFS.get(uri);
   if (defs) {
     args.push('-C', defs);
   }
-  const port: string | undefined = C.PROG_PORT.get(uri);
+  const port = C.PROG_PORT.get(uri);
   if (port) {
     args.push('-P', port);
   }
-  const rate: number | undefined = C.PROG_RATE.get(uri);
+  const rate = C.PROG_RATE.get(uri);
   if (rate) {
     args.push('-b', `${rate}`);
   }
@@ -90,28 +90,27 @@ function parseMemoryAreas(lines: string[]): string[] {
 
 function flashAreas(folder: WorkspaceFolder, outputFile: string) {
   return (areas: string[]): void => {
-    const exe: string | undefined = C.PROGRAMMER.get(folder.uri);
-    const progType: string | undefined = C.PROG_TYPE.get(folder.uri);
-    const devType: string | undefined = C.DEVICE_TYPE.get(folder.uri);
+    const exe = C.PROGRAMMER.get(folder.uri);
+    const progType = C.PROG_TYPE.get(folder.uri);
+    const devType = C.DEVICE_TYPE.get(folder.uri);
     if (!exe || !progType || !devType) {
       return;
     }
-    const additionalArgs: string[] = C.PROGRAMMER_ARGS.get(folder.uri) ?? [];
     const args = [
-      ...additionalArgs,
+      ...C.PROGRAMMER_ARGS.get(folder.uri) ?? [],
       '-v',
       '-p', devType,
       '-c', progType
     ];
-    const defs: string | undefined = C.PROG_DEFS.get(folder.uri);
+    const defs = C.PROG_DEFS.get(folder.uri);
     if (defs) {
       args.push('-C', defs);
     }
-    const port: string | undefined = C.PROG_PORT.get(folder.uri);
+    const port = C.PROG_PORT.get(folder.uri);
     if (port) {
       args.push('-P', port);
     }
-    const rate: number | undefined = C.PROG_RATE.get(folder.uri);
+    const rate = C.PROG_RATE.get(folder.uri);
     if (rate) {
       args.push('-b', `${rate}`);
     }

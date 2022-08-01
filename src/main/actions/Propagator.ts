@@ -35,13 +35,13 @@ function mutateCCppProperties(folder: Uri, mutator: (conf: any) => void): Promis
 }
 
 export function propagateSettings(uri: Uri): Promise<void> {
-  const compiler: string = C.COMPILER.get(uri) || '';
-  const cStandard: string = C.C_STD.get(uri) || DEFAULT;
-  const cppStandard: string = C.CPP_STD.get(uri) || DEFAULT;
-  const compilerArgs: string[] = C.COMPILER_ARGS.get(uri) ?? [];
-  const libraries: string[] = C.LIBRARIES.get(uri) ?? [];
-  const deviceType: string | undefined = C.DEVICE_TYPE.get(uri);
-  const deviceFreq: number | undefined = C.DEVICE_FREQ.get(uri);
+  const compiler = C.COMPILER.get(uri) || '';
+  const cStandard = C.C_STD.get(uri) || DEFAULT;
+  const cppStandard = C.CPP_STD.get(uri) || DEFAULT;
+  const compilerArgs = C.COMPILER_ARGS.get(uri) ?? [];
+  const libraries = C.LIBRARIES.get(uri) ?? [];
+  const deviceType = C.DEVICE_TYPE.get(uri);
+  const deviceFreq = C.DEVICE_FREQ.get(uri);
   return mutateCCppProperties(uri, conf => {
     conf.compilerPath = compiler;
     conf.cStandard = cStandard;

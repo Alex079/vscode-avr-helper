@@ -21,7 +21,7 @@ const crawlSrc = (uri: Uri) => (dir: string) =>
   new fdir()
     .withBasePath()
     .withFullPaths()
-    .withMaxDepth(C.MAX_DEPTH.get(uri) || 0)
+    .withMaxDepth(C.MAX_DEPTH.get(uri) ?? 0)
     .exclude(hidden)
     .filter(v => ANY_SOURCE.test(v))
     .crawl(dir)
@@ -31,7 +31,7 @@ const crawlLib = (uri: Uri) => (dir: string) =>
   new fdir()
     .withBasePath()
     .withFullPaths()
-    .withMaxDepth(C.MAX_DEPTH.get(uri) || 0)
+    .withMaxDepth(C.MAX_DEPTH.get(uri) ?? 0)
     .exclude(hidden)
     .onlyDirs()
     .crawl(dir)
@@ -115,15 +115,15 @@ function clean(uri: Uri, emitter: EventEmitter<string>): Promise<void> {
 }
 
 function getSources(uri: Uri): Promise<Sources> {
-  const extLibraries: string[] = C.LIBRARIES.get(uri) ?? [];
+  const extLibraries = C.LIBRARIES.get(uri) ?? [];
   return Promise.all([crawlSrc(uri)(uri.fsPath), Promise.all(extLibraries.map(crawlSrc(uri))).then(paths => paths.flat())])
     .then(([thisFolder, extFolders]): Sources => ({ thisFolder, extFolders }));
 }
 
 function getDependencies(uri: Uri) {
   return async (src: Sources): Promise<string[]> => {
-    const exe: string | undefined = C.COMPILER.get(uri);
-    const devType: string | undefined = C.DEVICE_TYPE.get(uri);
+    const exe = C.COMPILER.get(uri);
+    const devType = C.DEVICE_TYPE.get(uri);
     if (!exe || !devType) {
       return [];
     }
@@ -131,11 +131,11 @@ function getDependencies(uri: Uri) {
       '-MM',
       `-mmcu=${devType}`
     ];
-    const devFrequency: number | undefined = C.DEVICE_FREQ.get(uri);
+    const devFrequency = C.DEVICE_FREQ.get(uri);
     if (devFrequency) {
       args.push(`-DF_CPU=${devFrequency}UL`);
     }
-    const libs: string[] = C.LIBRARIES.get(uri) ?? [];
+    const libs = C.LIBRARIES.get(uri) ?? [];
     args.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
     let toBeChecked: string[] = src.thisFolder;
     let unused: string[] = src.extFolders;
@@ -216,18 +216,27 @@ function getLinkable(dependencies: FileTime[]): Linkable {
 
 function build(uri: Uri, emitter: EventEmitter<string>) {
   return async (linkables: Linkable[]): Promise<void> => {
-    const exe: string | undefined = C.COMPILER.get(uri);
-    const devType: string | undefined = C.DEVICE_TYPE.get(uri);
+    const exe = C.COMPILER.get(uri);
+    const devType = C.DEVICE_TYPE.get(uri);
     if (!exe || !devType) {
       return;
     }
     const mcuArgs = [
       `-mmcu=${devType}`
     ];
-    const devFrequency: number | undefined = C.DEVICE_FREQ.get(uri);
+    const devFrequency = C.DEVICE_FREQ.get(uri);
     if (devFrequency) {
       mcuArgs.push(`-DF_CPU=${devFrequency}UL`);
     }
+    const additionalArgs: string[] = [];
+    const cppStandard = C.CPP_STD.get(uri);
+    if (cppStandard) {
+      additionalArgs.push(`-std=${cppStandard}`);
+    }
+    const libs = C.LIBRARIES.get(uri) ?? [];
+    additionalArgs.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
+    const compilerArgs = C.COMPILER_ARGS.get(uri) ?? [];
+    const buildTarget = getOutputElf(uri.fsPath);
     return Promise
       .all(linkables
         .filter(linkable => linkable.needsRebuilding)
@@ -235,14 +244,7 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
           .mkdir(dirname(linkable.target), { recursive: true })
           .catch(() => {})
           .then(async () => {
-            const compilerArgs: string[] = C.COMPILER_ARGS.get(uri) || [];
-            const cppStandard: string | undefined = C.CPP_STD.get(uri);
-            if (cppStandard) {
-              compilerArgs.push(`-std=${cppStandard}`);
-            }
-            const libs: string[] = C.LIBRARIES.get(uri) || [];
-            compilerArgs.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
-            const info = spawnSync(exe, [...mcuArgs, ...compilerArgs, '-c', linkable.source, '-o', linkable.target], { cwd: uri.fsPath });
+            const info = spawnSync(exe, [...mcuArgs, ...compilerArgs, ...additionalArgs, '-c', linkable.source, '-o', linkable.target], { cwd: uri.fsPath });
             if (info.error) {
               emitter.fire(info.error.message);
               return false;
@@ -260,8 +262,9 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
         }
       })
       .then(() => {
-        const linkerArgs: string[] = C.LINKER_ARGS.get(uri) || [];
-        const info = spawnSync(exe, [...mcuArgs, ...linkerArgs, ...linkables.map(linkable => linkable.target), '-o', getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
+        const linkerArgs = C.LINKER_ARGS.get(uri) ?? [];
+        const linkTargets = linkables.map(linkable => linkable.target);
+        const info = spawnSync(exe, [...mcuArgs, ...linkerArgs, ...linkTargets, '-o', buildTarget], { cwd: uri.fsPath });
         if (info.error) {
           emitter.fire(info.error.message);
           return false;
@@ -276,8 +279,8 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
         }
       })
       .then(() => {
-        const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) || [];
-        const info = spawnSync(join(dirname(exe), 'avr-objdump'), [...disassemblerArgs, getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
+        const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) ?? [];
+        const info = spawnSync(join(dirname(exe), 'avr-objdump'), [...disassemblerArgs, buildTarget], { cwd: uri.fsPath });
         if (info.error) {
           emitter.fire(info.error.message);
           return false;
@@ -295,11 +298,11 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
       })
       .then(result => emitter.fire(`${result ? '✅' : '❌'} Disassembling\n`))
       .then(() => {
-        const reporterArgs: string[] = C.REPORTER_ARGS.get(uri) || [];
+        const reporterArgs = C.REPORTER_ARGS.get(uri) ?? [];
         if (reporterArgs.includes('-C')) {
           reporterArgs.push(`--mcu=${devType}`);
         }
-        const info = spawnSync(join(dirname(exe), 'avr-size'), [...reporterArgs, getOutputElf(uri.fsPath)], { cwd: uri.fsPath });
+        const info = spawnSync(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], { cwd: uri.fsPath });
         if (info.error) {
           emitter.fire(info.error.message);
           return;
