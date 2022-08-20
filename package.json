@@ -37,7 +37,7 @@
 						"type": "string",
 						"default": "",
 						"scope": "resource",
-						"description": "Path to compiler executable (avr-c++)"
+						"description": "Path to the compiler executable file (i.e. avr-c++). It is used to obtain the path to the bin folder and locate other executable files (avr-size and avr-objdump)."
 					},
 					"AVR.source.libraries": {
 						"type": "array",
@@ -46,19 +46,19 @@
 						},
 						"default": [],
 						"scope": "resource",
-						"description": "Paths to folders containing source libraries"
+						"description": "Paths to folders containing source libraries. The paths are used as base paths for compiler includes and for source file scanning to discover and compile dependencies. AVR GCC built-in headers do not need to be listed."
 					},
 					"AVR.source.scanning depth": {
 						"type": "integer",
 						"default": 2,
 						"scope": "resource",
-						"description": "Maximum depth of source directories scanning"
+						"description": "Maximum depth of source and libraries folders scanning. This limit is used for scanning the root project folder and each library folder."
 					},
 					"AVR.source.highlight": {
 						"type": "boolean",
 						"default": false,
 						"scope": "resource",
-						"description": "Highlight errors and warnings from build terminal"
+						"description": "Highlight errors and warnings from build terminal. After the build step is finished, the build problems can be marked in editors and in Problems view. By default this option is turned off, because the IDE can perform most of the checks before compilation."
 					},
 					"AVR.compiler.arguments": {
 						"type": "array",
@@ -76,7 +76,7 @@
 							"-pipe"
 						],
 						"scope": "resource",
-						"description": "Compiler arguments"
+						"description": "Compiler arguments. Applied when compiling source files into object files. One array item must contain exactly one argument, whitespace within the array items is preserved."
 					},
 					"AVR.linker.arguments": {
 						"type": "array",
@@ -89,7 +89,7 @@
 							"-pipe"
 						],
 						"scope": "resource",
-						"description": "Linker arguments"
+						"description": "Linker arguments. Applied when linking object files into an executable file. One array item must contain exactly one argument, whitespace within the array items is preserved."
 					},
 					"AVR.disassembler.arguments": {
 						"type": "array",
@@ -103,7 +103,7 @@
 							"--demangle"
 						],
 						"scope": "resource",
-						"description": "avr-objdump arguments"
+						"description": "Object dump arguments. Applied when producing assembler listing from an executable file. One array item must contain exactly one argument, whitespace within the array items is preserved."
 					},
 					"AVR.reporter.arguments": {
 						"type": "array",
@@ -114,7 +114,7 @@
 							"-A"
 						],
 						"scope": "resource",
-						"description": "avr-size arguments"
+						"description": "Size display arguments. Applied when reporting the size of an executable file, updated automatically when compiler path is updated. One array item must contain exactly one argument, whitespace within the array items is preserved."
 					},
 					"AVR.compiler.C standard": {
 						"type": "string",
@@ -132,7 +132,7 @@
 						"type": "string",
 						"default": "",
 						"scope": "resource",
-						"description": "MCU type"
+						"description": "MCU type name from the list provided by avrdude configuration."
 					},
 					"AVR.device.frequency": {
 						"type": [
@@ -141,13 +141,13 @@
 						],
 						"default": null,
 						"scope": "resource",
-						"description": "MCU frequency"
+						"description": "MCU frequency. When this parameter is set, it defines a value for F_CPU constant. This parameter value is displayed in the status bar but otherwise setting it is fully equivalent to adding '-DF_CPU=${frequency}UL' compiler argument."
 					},
 					"AVR.programmer.tool": {
 						"type": "string",
 						"default": "",
 						"scope": "resource",
-						"description": "Path to programmer tool (avrdude)"
+						"description": "Path to programmer tool (avrdude). It is required to obtain the list of supported MCU types and programmer types."
 					},
 					"AVR.programmer.arguments": {
 						"type": "array",
@@ -156,19 +156,19 @@
 						},
 						"default": [],
 						"scope": "resource",
-						"description": "Programmer arguments"
+						"description": "Programmer arguments. Applied when uploading firmware to a device. One array item must contain exactly one argument, whitespace within the array items is preserved."
 					},
 					"AVR.programmer.definitions": {
 						"type": "string",
 						"default": "",
 						"scope": "resource",
-						"description": "Path to programmer definitions (avrdude.conf)"
+						"description": "Path to programmer definitions (avrdude.conf). This parameter overrides default definitions from user profile folder or from avrdude folder."
 					},
 					"AVR.programmer.type": {
 						"type": "string",
 						"default": "",
 						"scope": "resource",
-						"description": "Programmer type"
+						"description": "Programmer type name from the list provided by avrdude configuration."
 					},
 					"AVR.programmer.port": {
 						"type": "string",
