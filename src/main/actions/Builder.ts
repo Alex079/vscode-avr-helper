@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { spawnSync } from "child_process";
 import { CustomExecution, EventEmitter, QuickPickItem, Task, TaskScope, Uri, tasks, window, workspace } from "vscode";
 import * as C from '../utils/Conf';
-import { getOutputElf, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
+import { getOutputElf, getOutputHex, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
 import { pickFolder, pickOne } from "../presentation/Inputs";
 import { fdir } from "fdir";
 import { basename, dirname, join, normalize, sep } from 'path';
@@ -297,6 +297,19 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
           });
       })
       .then(result => emitter.fire(`${result ? '✅' : '❌'} Disassembling\n`))
+      .then(() => {
+        const info = spawnSync(join(dirname(exe), 'avr-objcopy'), ['-Oihex', '-j.text', '-j.data', buildTarget, getOutputHex(uri.fsPath)], { cwd: uri.fsPath });
+        if (info.error) {
+          emitter.fire(info.error.message);
+          return false;
+        }
+        emitter.fire(info.stderr.toString());
+        if (info.status && info.status > 0) {
+          return false;
+        }
+        return true;
+      })
+      .then(result => emitter.fire(`${result ? '✅' : '❌'} Dumping HEX\n`))
       .then(() => {
         const reporterArgs = C.REPORTER_ARGS.get(uri) ?? [];
         if (reporterArgs.includes('-C')) {
