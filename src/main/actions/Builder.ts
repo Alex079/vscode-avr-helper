@@ -1,5 +1,5 @@
 import { promises as fs } from 'fs';
-import { spawnSync } from "child_process";
+import { ProcessEnvOptions, SpawnSyncReturns, spawnSync } from "child_process";
 import { CustomExecution, EventEmitter, QuickPickItem, Task, TaskScope, Uri, tasks, window, workspace } from "vscode";
 import * as C from '../utils/Conf';
 import { getOutputElf, getOutputHex, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
@@ -237,26 +237,22 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
     additionalArgs.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
     const compilerArgs = C.COMPILER_ARGS.get(uri) ?? [];
     const buildTarget = getOutputElf(uri.fsPath);
+    const options = { cwd: uri.fsPath };
     return Promise
       .all(linkables
         .filter(linkable => linkable.needsRebuilding)
         .map(linkable => fs
           .mkdir(dirname(linkable.target), { recursive: true })
           .catch(() => {})
-          .then(async () => {
-            const info = spawnSync(exe, [...mcuArgs, ...compilerArgs, ...additionalArgs, '-c', linkable.source, '-o', linkable.target], { cwd: uri.fsPath });
-            if (info.error) {
-              emitter.fire(info.error.message);
-              return false;
-            }
-            emitter.fire(info.stderr.toString());
-            return !(info.status && info.status > 0);
+          .then(() => {
+            const info = spawnSync(exe, [...mcuArgs, ...compilerArgs, ...additionalArgs, '-c', linkable.source, '-o', linkable.target], options);
+            return checkInfo(info, emitter);
           })
         )
       )
       .then(results => {
         const result = results.every(success => success);
-        emitter.fire(`${result ? '✅' : '❌'} Compilation\n`);
+        emitter.fire(`${icon(result)} Compilation\n`);
         if (!result) {
           throw new Error('Compilation failed.');
         }
@@ -264,69 +260,71 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
       .then(() => {
         const linkerArgs = C.LINKER_ARGS.get(uri) ?? [];
         const linkTargets = linkables.map(linkable => linkable.target);
-        const info = spawnSync(exe, [...mcuArgs, ...linkerArgs, ...linkTargets, '-o', buildTarget], { cwd: uri.fsPath });
-        if (info.error) {
-          emitter.fire(info.error.message);
-          return false;
-        }
-        emitter.fire(info.stderr.toString());
-        return !(info.status && info.status > 0);
+        const info = spawnSync(exe, [...mcuArgs, ...linkerArgs, ...linkTargets, '-o', buildTarget], options);
+        return checkInfo(info, emitter);
       })
       .then(result => {
-        emitter.fire(`${result ? '✅' : '❌'} Linkage\n`);
+        emitter.fire(`${icon(result)} Linkage\n`);
         if (!result) {
           throw new Error('Linkage failed.');
         }
       })
-      .then(() => {
-        const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) ?? [];
-        const info = spawnSync(join(dirname(exe), 'avr-objdump'), [...disassemblerArgs, buildTarget], { cwd: uri.fsPath });
-        if (info.error) {
-          emitter.fire(info.error.message);
-          return false;
+      .then(async () => {
+        if (C.DUMP_LST.get(uri)) {
+          const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) ?? [];
+          return dumpLst(exe, [...disassemblerArgs , buildTarget], getOutputLst(uri.fsPath), options, emitter)
+            .then(result => emitter.fire(`${icon(result)} Disassembling\n`));
         }
-        emitter.fire(info.stderr.toString());
-        if (info.status && info.status > 0) {
-          return false;
-        }
-        return fs.writeFile(getOutputLst(uri.fsPath), info.stdout)
-          .then(() => true)
-          .catch(error => {
-            emitter.fire(`${error}\n`);
-            return false;
-          });
       })
-      .then(result => emitter.fire(`${result ? '✅' : '❌'} Disassembling\n`))
-      .then(() => {
-        const info = spawnSync(join(dirname(exe), 'avr-objcopy'), ['-Oihex', '-j.text', '-j.data', buildTarget, getOutputHex(uri.fsPath)], { cwd: uri.fsPath });
-        if (info.error) {
-          emitter.fire(info.error.message);
-          return false;
+      .then(async () => {
+        if (C.DUMP_HEX.get(uri)) {
+          return dumpHex(exe, ['-Oihex', '-j.text', '-j.data', buildTarget, getOutputHex(uri.fsPath)], options, emitter)
+            .then(result => emitter.fire(`${icon(result)} Dumping HEX\n`));
         }
-        emitter.fire(info.stderr.toString());
-        if (info.status && info.status > 0) {
-          return false;
-        }
-        return true;
       })
-      .then(result => emitter.fire(`${result ? '✅' : '❌'} Dumping HEX\n`))
       .then(() => {
         const reporterArgs = C.REPORTER_ARGS.get(uri) ?? [];
         if (reporterArgs.includes('-C')) {
           reporterArgs.push(`--mcu=${devType}`);
         }
-        const info = spawnSync(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], { cwd: uri.fsPath });
-        if (info.error) {
-          emitter.fire(info.error.message);
-          return;
+        const info = spawnSync(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], options);
+        if (checkInfo(info, emitter)) {
+          emitter.fire(info.stdout.toString());
         }
-        emitter.fire(info.stderr.toString());
-        if (info.status && info.status > 0) {
-          return;
-        }
-        emitter.fire(info.stdout.toString());
       });
   };
+}
+
+const icon = (result: boolean) => result ? '✅' : '❌';
+
+async function dumpLst(exe: string, args: string[], outputFile: string, options: ProcessEnvOptions, emitter: EventEmitter<string>): Promise<boolean> {
+  const info = spawnSync(join(dirname(exe), 'avr-objdump'), args, options);
+  if (!checkInfo(info, emitter)) {
+    return false;
+  }
+  return fs.writeFile(outputFile, info.stdout)
+    .then(() => true)
+    .catch(error => {
+      emitter.fire(`${error}\n`);
+      return false;
+    });
+}
+
+async function dumpHex(exe: string, args: string[], options: ProcessEnvOptions, emitter: EventEmitter<string>) {
+  const info = spawnSync(join(dirname(exe), 'avr-objcopy'), args, options);
+  return checkInfo(info, emitter);
+}
+
+function checkInfo(info: SpawnSyncReturns<Buffer>, emitter: EventEmitter<string>): boolean {
+  if (info.error) {
+    emitter.fire(info.error.message);
+    return false;
+  }
+  emitter.fire(info.stderr.toString());
+  if (info.status && info.status > 0) {
+    return false;
+  }
+  return true;
 }
 
 function printInfo(uri: Uri, emitter: EventEmitter<string>) {
