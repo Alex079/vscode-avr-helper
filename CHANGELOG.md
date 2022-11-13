@@ -1,3 +1,7 @@
+## v2.0.1
+
+- Pre-select build action by default
+
 ## v2.0.0
 
 - AVR Helper extension is using built-in build system which should be compatible with all platforms; `make` is not required anymore
