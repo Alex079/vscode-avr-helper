@@ -8,7 +8,8 @@ import { fdir } from "fdir";
 import { basename, dirname, join, normalize, sep } from 'path';
 import { AvrBuildTaskTerminal } from './BuildTerminal';
 
-const GOALS: string[] = ['build', 'clean', 'scan'];
+const GOALS = ['build', 'clean', 'scan'];
+const DEFAULT_GOAL = 'build';
 
 const ANY_HEADER = /\.h(h|pp|xx|\+\+)?$/i;
 const ANY_SOURCE = /\.c(c|pp|xx|\+\+)?$/i;
@@ -56,7 +57,7 @@ interface Linkable {
 export function performBuildTask(): Promise<void> {
   return pickFolder()
     .then(folder => 
-      pickOne('Select build goal', GOALS.map(toItem), () => false)
+      pickOne('Select build goal', GOALS.map(toItem), item => item.label === DEFAULT_GOAL)
         .then(fromItem)
         .then(dispatch(folder.uri))
     )
