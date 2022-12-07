@@ -38,6 +38,7 @@ function getDeviceInfo(uri: Uri): string {
     return '';
   }
   const args: string[] = [
+    ...C.PROGRAMMER_ARGS.get(uri) ?? [],
     '-v',
     '-p', devType,
     '-c', progType
