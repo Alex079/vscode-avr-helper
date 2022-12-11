@@ -1,6 +1,6 @@
 ## v2.1.0
 
-- Pre-select build action by default
+- Highlight build action by default
 - Add option for HEX file output
 - Fix additional programmer arguments
 
