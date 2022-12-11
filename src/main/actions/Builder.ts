@@ -1,5 +1,5 @@
 import { promises as fs } from 'fs';
-import { ProcessEnvOptions, SpawnSyncReturns, spawnSync } from "child_process";
+import { SpawnSyncReturns } from "child_process";
 import { CustomExecution, EventEmitter, QuickPickItem, Task, TaskScope, Uri, tasks, window, workspace } from "vscode";
 import * as C from '../utils/Conf';
 import { getOutputElf, getOutputHex, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
@@ -7,6 +7,7 @@ import { pickFolder, pickOne } from "../presentation/Inputs";
 import { fdir } from "fdir";
 import { basename, dirname, join, normalize, sep } from 'path';
 import { AvrBuildTaskTerminal } from './BuildTerminal';
+import { runCommand } from './Spawner';
 
 const GOALS = ['build', 'clean', 'scan'];
 const DEFAULT_GOAL = 'build';
@@ -142,7 +143,7 @@ function getDependencies(uri: Uri) {
     let unused: string[] = src.extFolders;
     let result: string[] = [];
     while (toBeChecked.length > 0) {
-      const info = spawnSync(exe, [...args, ...toBeChecked], { cwd: uri.fsPath });
+      const info = runCommand(exe, [...args, ...toBeChecked], uri.fsPath);
       if (info.error) {
         throw new Error(`Error: cannot collect dependencies. ${info.error.message}`);
       }
@@ -238,7 +239,6 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
     additionalArgs.push(...(await Promise.all(libs.map(crawlLib(uri)))).flat().map(lib => `-I${lib}`));
     const compilerArgs = C.COMPILER_ARGS.get(uri) ?? [];
     const buildTarget = getOutputElf(uri.fsPath);
-    const options = { cwd: uri.fsPath };
     return Promise
       .all(linkables
         .filter(linkable => linkable.needsRebuilding)
@@ -246,7 +246,7 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
           .mkdir(dirname(linkable.target), { recursive: true })
           .catch(() => {})
           .then(() => {
-            const info = spawnSync(exe, [...mcuArgs, ...compilerArgs, ...additionalArgs, '-c', linkable.source, '-o', linkable.target], options);
+            const info = runCommand(exe, [...mcuArgs, ...compilerArgs, ...additionalArgs, '-c', linkable.source, '-o', linkable.target], uri.fsPath);
             return checkInfo(info, emitter);
           })
         )
@@ -261,7 +261,7 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
       .then(() => {
         const linkerArgs = C.LINKER_ARGS.get(uri) ?? [];
         const linkTargets = linkables.map(linkable => linkable.target);
-        const info = spawnSync(exe, [...mcuArgs, ...linkerArgs, ...linkTargets, '-o', buildTarget], options);
+        const info = runCommand(exe, [...mcuArgs, ...linkerArgs, ...linkTargets, '-o', buildTarget], uri.fsPath);
         return checkInfo(info, emitter);
       })
       .then(result => {
@@ -273,13 +273,13 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
       .then(async () => {
         if (C.DUMP_LST.get(uri)) {
           const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) ?? [];
-          return dumpLst(exe, [...disassemblerArgs , buildTarget], getOutputLst(uri.fsPath), options, emitter)
+          return dumpLst(exe, [...disassemblerArgs , buildTarget], getOutputLst(uri.fsPath), uri.fsPath, emitter)
             .then(result => emitter.fire(`${icon(result)} Disassembling\n`));
         }
       })
       .then(async () => {
         if (C.DUMP_HEX.get(uri)) {
-          return dumpHex(exe, ['-Oihex', '-j.text', '-j.data', buildTarget, getOutputHex(uri.fsPath)], options, emitter)
+          return dumpHex(exe, ['-Oihex', '-j.text', '-j.data', buildTarget, getOutputHex(uri.fsPath)], uri.fsPath, emitter)
             .then(result => emitter.fire(`${icon(result)} Dumping HEX\n`));
         }
       })
@@ -288,7 +288,7 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
         if (reporterArgs.includes('-C')) {
           reporterArgs.push(`--mcu=${devType}`);
         }
-        const info = spawnSync(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], options);
+        const info = runCommand(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], uri.fsPath);
         if (checkInfo(info, emitter)) {
           emitter.fire(info.stdout.toString());
         }
@@ -298,8 +298,8 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
 
 const icon = (result: boolean) => result ? '✅' : '❌';
 
-async function dumpLst(exe: string, args: string[], outputFile: string, options: ProcessEnvOptions, emitter: EventEmitter<string>): Promise<boolean> {
-  const info = spawnSync(join(dirname(exe), 'avr-objdump'), args, options);
+async function dumpLst(exe: string, args: string[], outputFile: string, cwd: string, emitter: EventEmitter<string>): Promise<boolean> {
+  const info = runCommand(join(dirname(exe), 'avr-objdump'), args, cwd);
   if (!checkInfo(info, emitter)) {
     return false;
   }
@@ -311,8 +311,8 @@ async function dumpLst(exe: string, args: string[], outputFile: string, options:
     });
 }
 
-async function dumpHex(exe: string, args: string[], options: ProcessEnvOptions, emitter: EventEmitter<string>) {
-  const info = spawnSync(join(dirname(exe), 'avr-objcopy'), args, options);
+async function dumpHex(exe: string, args: string[], cwd: string, emitter: EventEmitter<string>) {
+  const info = runCommand(join(dirname(exe), 'avr-objcopy'), args, cwd);
   return checkInfo(info, emitter);
 }
 

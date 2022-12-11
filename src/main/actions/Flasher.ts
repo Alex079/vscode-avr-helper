@@ -1,10 +1,10 @@
 import { QuickPickItem, ShellExecution, Task, Uri, WorkspaceFolder, tasks } from 'vscode';
-import { spawnSync } from "child_process";
 import { getOutputElf } from "../utils/Files";
 import { pickFolder, pickMany } from "../presentation/Inputs";
 import { promises as fs } from 'fs';
 import * as C from '../utils/Conf';
 import { showMessageAndThrowError } from '../utils/ErrorHandler';
+import { runCommand } from './Spawner';
 
 const ERASE: string = '(erase chip)';
 const toItem = (i: string): QuickPickItem => ({ label: i });
@@ -38,6 +38,7 @@ function getDeviceInfo(uri: Uri): string {
     return '';
   }
   const args: string[] = [
+    ...C.PROGRAMMER_ARGS.get(uri) ?? [],
     '-v',
     '-p', devType,
     '-c', progType
@@ -54,7 +55,7 @@ function getDeviceInfo(uri: Uri): string {
   if (rate) {
     args.push('-b', `${rate}`);
   }
-  const info = spawnSync(exe, args, { cwd: uri.fsPath });
+  const info = runCommand(exe, args, uri.fsPath);
   if (info.error) {
     throw new Error(info.error.message);
   }
