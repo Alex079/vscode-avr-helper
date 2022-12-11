@@ -1,10 +1,10 @@
 import { QuickPickItem, ShellExecution, Task, Uri, WorkspaceFolder, tasks } from 'vscode';
-import { spawnSync } from "child_process";
 import { getOutputElf } from "../utils/Files";
 import { pickFolder, pickMany } from "../presentation/Inputs";
 import { promises as fs } from 'fs';
 import * as C from '../utils/Conf';
 import { showMessageAndThrowError } from '../utils/ErrorHandler';
+import { runCommand } from './Spawner';
 
 const ERASE: string = '(erase chip)';
 const toItem = (i: string): QuickPickItem => ({ label: i });
@@ -55,7 +55,7 @@ function getDeviceInfo(uri: Uri): string {
   if (rate) {
     args.push('-b', `${rate}`);
   }
-  const info = spawnSync(exe, args, { cwd: uri.fsPath });
+  const info = runCommand(exe, args, uri.fsPath);
   if (info.error) {
     throw new Error(info.error.message);
   }
@@ -116,6 +116,7 @@ function flashAreas(folder: WorkspaceFolder, outputFile: string) {
       args.push('-b', `${rate}`);
     }
     args.push(...areas.map(v => v === ERASE ? '-e' : `-U${v}:w:${outputFile}:e`));
+    console.log(`working directory: ${folder.uri.fsPath}\ncommand: ${exe} ${args.join(' ')}`);
     tasks.executeTask(
       new Task(
         { type: 'AVR.flash' }, folder, areas.toString(), 'AVR', new ShellExecution(exe, args)

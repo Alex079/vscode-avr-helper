@@ -1,7 +1,7 @@
 import { Uri } from "vscode";
 import * as C from '../utils/Conf';
-import { spawnSync } from "child_process";
 import { join } from "path";
+import { runCommand } from "./Spawner";
 
 export async function getProperties(uri: Uri, kind: string): Promise<string> {
   const exe: string | undefined = C.PROGRAMMER.get(uri);
@@ -13,7 +13,7 @@ export async function getProperties(uri: Uri, kind: string): Promise<string> {
   if (defs) {
     args.push('-C', defs);
   }
-  const info = spawnSync(exe, args, { cwd: uri.fsPath });
+  const info = runCommand(exe, args, uri.fsPath);
   if (info.error) {
     throw new Error(info.error.message);
   }
@@ -21,7 +21,7 @@ export async function getProperties(uri: Uri, kind: string): Promise<string> {
 }
 
 export function getSizeFormat(uri: Uri, baseFolder: string): string {
-  const info = spawnSync(join(baseFolder, 'avr-size'), ['-h'], { cwd: uri.fsPath });
+  const info = runCommand(join(baseFolder, 'avr-size'), ['-h'], uri.fsPath);
   if (info.error) {
     console.log(info.error.message);
     return '-A';
