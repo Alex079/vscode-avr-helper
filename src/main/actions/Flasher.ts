@@ -116,7 +116,6 @@ function flashAreas(folder: WorkspaceFolder, outputFile: string) {
       args.push('-b', `${rate}`);
     }
     args.push(...areas.map(v => v === ERASE ? '-e' : `-U${v}:w:${outputFile}:e`));
-    console.log(`working directory: ${folder.uri.fsPath}\ncommand: ${exe} ${args.join(' ')}`);
     tasks.executeTask(
       new Task(
         { type: 'AVR.flash' }, folder, areas.toString(), 'AVR', new ShellExecution(exe, args)
