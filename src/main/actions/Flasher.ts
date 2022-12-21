@@ -1,41 +1,59 @@
-import { QuickPickItem, ShellExecution, Task, Uri, WorkspaceFolder, tasks } from 'vscode';
+import { CustomExecution, EventEmitter, QuickPickItem, Task, TaskScope, Uri, tasks, window, workspace, WorkspaceFolder, commands } from 'vscode';
 import { getOutputElf } from "../utils/Files";
 import { pickFolder, pickMany } from "../presentation/Inputs";
 import { promises as fs } from 'fs';
 import * as C from '../utils/Conf';
-import { showMessageAndThrowError } from '../utils/ErrorHandler';
-import { runCommand } from './Spawner';
+import { checkInfo, runCommand } from './Spawner';
+import { AvrTaskTerminal } from './Terminal';
 
 const ERASE: string = '(erase chip)';
-const toItem = (i: string): QuickPickItem => ({ label: i });
+const toItem = (label: string): QuickPickItem => ({ label });
 const fromItem = (i: QuickPickItem): string => i.label;
 
 export function performFlashTask(): Promise<void> {
   return pickFolder()
-    .then(folder => {
-      const outputFile = getOutputElf(folder.uri.fsPath);
-      return fs.stat(outputFile)
-        .then(stats => {
-          if (stats.isFile()) {
-            return getDeviceInfo(folder.uri).split('\n');
-          }
-          throw new Error(`${outputFile} is not a file`);
-        })
-        .catch(showMessageAndThrowError)
-        .then(parseMemoryAreas)
-        .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), () => false))
-        .then(areas => areas.map(fromItem))
-        .then(flashAreas(folder, outputFile));
-    })
+    .then(flash)
     .catch(console.log);
 }
 
-function getDeviceInfo(uri: Uri): string {
+const flash = (folder: WorkspaceFolder) => {
+  const uri = folder.uri;
+  const outputFile = getOutputElf(uri.fsPath);
+  fs.stat(outputFile)
+    .then(stats => {
+      if (!stats.isFile()) {
+        throw new Error(`${outputFile} is not a file`);
+      }
+    })
+    .then(() => tasks.executeTask(new Task({type: 'AVR.flash'}, folder ?? TaskScope.Workspace, `⚡️ ${new Date()}`, 'AVR Helper',
+      new CustomExecution(async () => new AvrTaskTerminal(emitter =>
+        getDeviceInfo(uri, emitter)
+          .then(parseMemoryAreas)
+          .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), () => false))
+          .then(areas => areas.map(fromItem))
+          .then(flashAreas(uri, outputFile, emitter))
+          .then(() => emitter.fire('✅'))
+          .catch(handleFlashError(folder))
+      ))
+    )));
+};
+
+const handleFlashError = (folder: WorkspaceFolder) => (reason: object): void => {
+  console.log(`${reason}`);
+  window.showErrorMessage(`${reason}`, 'Retry')
+    .then(goal => {
+      if (goal) {
+        flash(folder);
+      }
+    });
+};
+
+async function getDeviceInfo(uri: Uri, emitter: EventEmitter<string>): Promise<string[]> {
   const exe = C.PROGRAMMER.get(uri);
   const progType = C.PROG_TYPE.get(uri);
   const devType = C.DEVICE_TYPE.get(uri);
   if (!exe || !progType || ! devType) {
-    return '';
+    return [];
   }
   const args: string[] = [
     ...C.PROGRAMMER_ARGS.get(uri) ?? [],
@@ -55,14 +73,11 @@ function getDeviceInfo(uri: Uri): string {
   if (rate) {
     args.push('-b', `${rate}`);
   }
-  const info = runCommand(exe, args, uri.fsPath);
-  if (info.error) {
-    throw new Error(info.error.message);
+  const info = runCommand(exe, args, uri.fsPath, emitter);
+  if (checkInfo(info, emitter)) {
+    return info.stderr.toString().split('\n');
   }
-  if (info.status && info.status > 0) {
-    throw new Error(info.stderr.toString());
-  }
-  return info.stderr.toString();
+  throw new Error('Fetching device info failed.');
 }
 
 function parseMemoryAreas(lines: string[]): string[] {
@@ -89,37 +104,36 @@ function parseMemoryAreas(lines: string[]): string[] {
   return result;
 }
 
-function flashAreas(folder: WorkspaceFolder, outputFile: string) {
+function flashAreas(uri: Uri, outputFile: string, emitter: EventEmitter<string>) {
   return (areas: string[]): void => {
-    const exe = C.PROGRAMMER.get(folder.uri);
-    const progType = C.PROG_TYPE.get(folder.uri);
-    const devType = C.DEVICE_TYPE.get(folder.uri);
+    const exe = C.PROGRAMMER.get(uri);
+    const progType = C.PROG_TYPE.get(uri);
+    const devType = C.DEVICE_TYPE.get(uri);
     if (!exe || !progType || !devType) {
       return;
     }
     const args = [
-      ...C.PROGRAMMER_ARGS.get(folder.uri) ?? [],
+      ...C.PROGRAMMER_ARGS.get(uri) ?? [],
       '-v',
       '-p', devType,
       '-c', progType
     ];
-    const defs = C.PROG_DEFS.get(folder.uri);
+    const defs = C.PROG_DEFS.get(uri);
     if (defs) {
       args.push('-C', defs);
     }
-    const port = C.PROG_PORT.get(folder.uri);
+    const port = C.PROG_PORT.get(uri);
     if (port) {
       args.push('-P', port);
     }
-    const rate = C.PROG_RATE.get(folder.uri);
+    const rate = C.PROG_RATE.get(uri);
     if (rate) {
       args.push('-b', `${rate}`);
     }
     args.push(...areas.map(v => v === ERASE ? '-e' : `-U${v}:w:${outputFile}:e`));
-    tasks.executeTask(
-      new Task(
-        { type: 'AVR.flash' }, folder, areas.toString(), 'AVR', new ShellExecution(exe, args)
-      )
-    );
+    const info = runCommand(exe, args, uri.fsPath, emitter);
+    if (!checkInfo(info, emitter)) {
+      throw new Error('Flashing failed.');
+    }
   };
 }
