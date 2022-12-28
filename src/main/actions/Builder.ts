@@ -1,5 +1,5 @@
 import { promises as fs } from 'fs';
-import { CustomExecution, EventEmitter, QuickPickItem, Task, TaskScope, Uri, tasks, window, workspace, WorkspaceFolder } from "vscode";
+import { CustomExecution, EventEmitter, QuickPickItem, Task, TaskScope, Uri, WorkspaceFolder, tasks, window } from "vscode";
 import * as C from '../utils/Conf';
 import { getOutputElf, getOutputHex, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
 import { pickFolder, pickOne } from "../presentation/Inputs";
