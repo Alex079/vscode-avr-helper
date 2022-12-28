@@ -7,7 +7,7 @@ export function runCommand(exe: string, args: string[], cwd: string, emitter: Ev
 }
 
 export function runCommandStandalone(exe: string, args: string[], cwd: string): SpawnSyncReturns<Buffer> {
-  console.log();
+  console.log(`Command: ${exe} ${args.join(' ')}`);
   return spawnSync(exe, args, { cwd });
 }
 
