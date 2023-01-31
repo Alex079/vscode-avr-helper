@@ -5,6 +5,7 @@ import { promises as fs } from 'fs';
 import * as C from '../utils/Conf';
 import { checkInfo, runCommand } from './Spawner';
 import { AvrTaskTerminal } from './Terminal';
+import { askToRebuildFolderAfterError } from './Builder';
 
 const ERASE: string = '(erase chip)';
 const toItem = (label: string): QuickPickItem => ({ label });
@@ -19,23 +20,26 @@ export function performFlashTask(): Promise<void> {
 const flash = (folder: WorkspaceFolder) => {
   const uri = folder.uri;
   const outputFile = getOutputElf(uri.fsPath);
-  fs.stat(outputFile)
+  return fs.stat(outputFile)
     .then(stats => {
       if (!stats.isFile()) {
         throw new Error(`${outputFile} is not a file`);
       }
     })
-    .then(() => tasks.executeTask(new Task({type: 'AVR.flash'}, folder ?? TaskScope.Workspace, `⚡️ ${new Date()}`, 'AVR Helper',
-      new CustomExecution(async () => new AvrTaskTerminal(emitter =>
-        getDeviceInfo(uri, emitter)
-          .then(parseMemoryAreas)
-          .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), () => false))
-          .then(areas => areas.map(fromItem))
-          .then(flashAreas(uri, outputFile, emitter))
-          .then(() => emitter.fire('✅'))
-          .catch(handleFlashError(folder))
-      ))
-    )));
+    .then(() => {
+      tasks.executeTask(new Task({type: 'AVR.flash'}, folder ?? TaskScope.Workspace, `⚡️ ${new Date()}`, 'AVR Helper',
+        new CustomExecution(async () => new AvrTaskTerminal(emitter =>
+          getDeviceInfo(uri, emitter)
+            .then(parseMemoryAreas)
+            .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), () => false).catch(() => []))
+            .then(areas => areas.map(fromItem))
+            .then(flashAreas(uri, outputFile, emitter))
+            .then(() => emitter.fire('✅'))
+            .catch(handleFlashError(folder))
+        ))
+      ));
+    })
+    .catch(askToRebuildFolderAfterError(folder));
 };
 
 const handleFlashError = (folder: WorkspaceFolder) => (reason: object): void => {
@@ -106,6 +110,9 @@ function parseMemoryAreas(lines: string[]): string[] {
 
 function flashAreas(uri: Uri, outputFile: string, emitter: EventEmitter<string>) {
   return (areas: string[]): void => {
+    if (areas.length === 0) {
+      return;
+    }
     const exe = C.PROGRAMMER.get(uri);
     const progType = C.PROG_TYPE.get(uri);
     const devType = C.DEVICE_TYPE.get(uri);

@@ -74,7 +74,7 @@ const dispatch = (folder: WorkspaceFolder) => (goal: string): void => {
             .then(getDependencies(uri, emitter))
             .then(getLinkables(uri))
             .then(printInfo(uri, emitter))
-            .catch(handleBuildError(folder))
+            .catch(askToRebuildFolderAfterError(folder))
         ))
       ));
       break;
@@ -93,14 +93,14 @@ const dispatch = (folder: WorkspaceFolder) => (goal: string): void => {
             .then(getLinkables(uri))
             .then(build(uri, emitter))
             .then(() => emitter.fire('✅'))
-            .catch(handleBuildError(folder))
+            .catch(askToRebuildFolderAfterError(folder))
         )), C.HIGHLIGHT.get(uri) ? '$gcc' : undefined
       ));
       break;
   }
 };
 
-const handleBuildError = (folder: WorkspaceFolder) => (reason: object): void => {
+export const askToRebuildFolderAfterError = (folder: WorkspaceFolder) => (reason: object): void => {
   console.log(`${reason}`);
   window.showErrorMessage(`${reason}`, ...GOALS)
     .then(goal => {
