@@ -3,10 +3,11 @@ import { Event, EventEmitter, Pseudoterminal } from "vscode";
 class PrintEmitter extends EventEmitter<string> {
   fire(data: string): void {
     super.fire(data?.replace(/(\r\n|\r(?!\n)|(?<!\r)\n)/g, '\r\n'));
+    super.fire('\r\n');
   }
 }
 
-export class AvrBuildTaskTerminal implements Pseudoterminal {
+export class AvrTaskTerminal implements Pseudoterminal {
 
   constructor(whenOpen: (emitter: PrintEmitter) => Promise<void>) {
     this.whenOpen = whenOpen;
