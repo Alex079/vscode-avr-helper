@@ -2,7 +2,7 @@ import { Uri } from 'vscode';
 import { join } from 'path';
 import { getContext } from './Context';
 
-const OUTPUT_ROOT: string = join('.vscode', 'avr.build');
+const OUTPUT_ROOT: string = 'build';
 const OUTPUT_ELF: string = join(OUTPUT_ROOT, 'output.elf');
 const OUTPUT_HEX: string = join(OUTPUT_ROOT, 'output.hex');
 const OUTPUT_LST: string = join(OUTPUT_ROOT, 'output.lst');
