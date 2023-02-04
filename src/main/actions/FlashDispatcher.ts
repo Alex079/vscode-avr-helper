@@ -4,11 +4,11 @@ import { getOutputElf } from "../utils/Files";
 import { promises as fs } from 'fs';
 import { AvrTaskTerminal } from "./Terminal";
 import { performFlash } from "./Flasher";
-import { askToRebuildAfterError as askToRebuildAfterError } from "./BuildDispatcher";
+import { retryBuildTask } from "./BuildDispatcher";
 
-export const performFlashTask = () => pickFolder().then(flash);
+export const performFlashTask = () => pickFolder().then(run);
 
-const flash = (folder: WorkspaceFolder) => {
+const run = (folder: WorkspaceFolder) => {
   const uri = folder.uri;
   const outputFile = getOutputElf(uri.fsPath);
   return fs.stat(outputFile)
@@ -20,19 +20,18 @@ const flash = (folder: WorkspaceFolder) => {
     .then(() =>
       tasks.executeTask(new Task({ type: 'AVR.flash' }, folder ?? TaskScope.Workspace, `🔥 ${new Date()}`, 'AVR Helper',
         new CustomExecution(async () => new AvrTaskTerminal(emitter =>
-          performFlash(uri, emitter).catch(askToReflashAfterError(folder))
+          performFlash(uri, emitter).catch(retryFlashTask(folder))
         ))
       ))
     )
-    .catch(askToRebuildAfterError(folder));
+    .catch(retryBuildTask(folder));
 };
 
-const askToReflashAfterError = (folder: WorkspaceFolder) => (reason: object): void => {
-  console.log(`${reason}`);
-  window.showErrorMessage(`${reason}`, 'Flash')
+export const retryFlashTask = (folder: WorkspaceFolder) => (reason: object) => {
+  window.showErrorMessage(`${reason}`, '🔥Flash')
     .then(goal => {
       if (goal) {
-        flash(folder);
+        run(folder);
       }
     });
 };

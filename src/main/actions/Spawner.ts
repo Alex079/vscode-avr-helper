@@ -1,15 +1,25 @@
 import { spawn } from "child_process";
+import { exitCode } from "process";
 import { PrintEmitter } from "./Terminal";
+
+interface ProcessStatus {
+  exitCode?: number,
+  errorMessage?: string
+}
 
 interface ProcessInfo {
   stdout: string,
   stderr: string,
-  message?: string
+  status: ProcessStatus
 }
 
 export function runCommand(exe: string, args: string[], cwd: string, emitter?: PrintEmitter): Promise<ProcessInfo> {
-  if (emitter) { emitter.fireLine(`\nCommand: ${exe} ${args.join(' ')}`); }
-  console.log(`Command: ${exe} ${args.join(' ')}`);
+  if (emitter) {
+    emitter.fireLine(`\nCommand: ${exe} ${args.join(' ')}`);
+  }
+  else {
+    console.log(`Command: ${exe} ${args.join(' ')}`);
+  }
   const process = spawn(exe, args, { cwd });
   return Promise.all([
     new Promise<string>(resolve => {
@@ -35,15 +45,26 @@ export function runCommand(exe: string, args: string[], cwd: string, emitter?: P
           resolve(result);
         });
     }),
-    new Promise<string | undefined>(resolve => {
+    new Promise<ProcessStatus>(resolve => {
       process
         .on('exit', code => {
-          resolve(code === 0 ? undefined : `${code}`);
+          resolve({exitCode: code ?? undefined});
         })
         .on('error', error => {
-          resolve(error.message);
+          resolve({errorMessage: error.message});
         });
     })
   ])
-  .then(([stdout, stderr, message]) => ({stdout, stderr, message}));
+  .then(([stdout, stderr, status]) => {
+    if (status.errorMessage) {
+      const text = `Error: ${status.errorMessage}`;
+      if (emitter) {
+        emitter.fireLine(text);
+      }
+      else {
+        console.error(text);
+      }
+    }
+    return {stdout, stderr, status};
+  });
 }

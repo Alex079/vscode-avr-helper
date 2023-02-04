@@ -4,8 +4,11 @@ import { performBuild, performClean, performScan } from "./Builder";
 import { AvrTaskTerminal } from "./Terminal";
 import * as C from '../utils/Conf';
 
-const GOALS = ['build', 'clean', 'scan'];
-const DEFAULT_GOAL = 'build';
+const BUILD = 'Build';
+const CLEAN = 'Clean';
+const SCAN = 'Scan';
+const GOALS = [BUILD, CLEAN, SCAN];
+const DEFAULT_GOAL = BUILD;
 
 const toItem = (label: string): QuickPickItem => ({ label });
 const fromItem = (i: QuickPickItem): string => i.label;
@@ -15,44 +18,43 @@ export const performBuildTask = () => {
     .then(folder =>
       pickOne('Select build goal', GOALS.map(toItem), item => item.label === DEFAULT_GOAL)
         .then(fromItem)
-        .then(dispatch(folder))
+        .then(run(folder))
     )
     .catch(console.log);
 };
 
-const dispatch = (folder: WorkspaceFolder) => (goal: string): void => {
+const run = (folder: WorkspaceFolder) => (goal: string): void => {
   const uri = folder.uri;
   switch (goal) {
-    case 'scan':
+    case SCAN:
       tasks.executeTask(new Task({ type: 'AVR.build' }, folder ?? TaskScope.Workspace, `🔍 ${new Date()}`, 'AVR Helper',
         new CustomExecution(async () => new AvrTaskTerminal(emitter =>
-          performScan(uri, emitter).catch(askToRebuildAfterError(folder))
+          performScan(uri, emitter).catch(retryBuildTask(folder))
         ))
       ));
       break;
-    case 'clean':
+    case CLEAN:
       tasks.executeTask(new Task({ type: 'AVR.build' }, folder ?? TaskScope.Workspace, `🧹 ${new Date()}`, 'AVR Helper',
         new CustomExecution(async () => new AvrTaskTerminal(emitter =>
-          performClean(uri, emitter).catch(askToRebuildAfterError(folder))
+          performClean(uri, emitter).catch(retryBuildTask(folder))
         ))
       ));
       break;
-    case 'build':
+    case BUILD:
       tasks.executeTask(new Task({ type: 'AVR.build' }, folder ?? TaskScope.Workspace, `🔧 ${new Date()}`, 'AVR Helper',
         new CustomExecution(async () => new AvrTaskTerminal(emitter =>
-          performBuild(uri, emitter).catch(askToRebuildAfterError(folder))
+          performBuild(uri, emitter).catch(retryBuildTask(folder))
         )), C.HIGHLIGHT.get(uri) ? '$gcc' : undefined
       ));
       break;
   }
 };
 
-export const askToRebuildAfterError = (folder: WorkspaceFolder) => (reason: object): void => {
-  console.log(`${reason}`);
+export const retryBuildTask = (folder: WorkspaceFolder) => (reason: object) => {
   window.showErrorMessage(`${reason}`, ...GOALS)
     .then(goal => {
       if (goal) {
-        dispatch(folder)(goal);
+        run(folder)(goal);
       }
     });
 };

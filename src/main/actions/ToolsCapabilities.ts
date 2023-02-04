@@ -14,20 +14,15 @@ export async function getProperties(uri: Uri, kind: string): Promise<string> {
     args.push('-C', defs);
   }
   return runCommand(exe, args, uri.fsPath)
-    .then(info => {
-      if (info.message) {
-        throw new Error(info.message);
+    .then(process => {
+      if (process.status.errorMessage) {
+        throw new Error('Could not get device properties.');
       }
-      return info.stderr;
+      return process.stderr;
     });
 }
 
 export async function getSizeFormat(uri: Uri, baseFolder: string): Promise<string> {
   return runCommand(join(baseFolder, 'avr-size'), ['-h'], uri.fsPath)
-    .then(info => {
-      if (info.message) {
-        console.log(info.message);
-      }
-      return info.stderr.includes('-C') ? '-C' : '-A';
-    });
+    .then(info => info.stderr.includes('-C') ? '-C' : '-A');
 }

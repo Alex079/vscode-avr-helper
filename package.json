@@ -231,10 +231,10 @@
 				"enablement": "AVR.command.flash.enabled"
 			},
 			{
-				"command": "AVR.command.zap",
-				"title": "Zap",
+				"command": "AVR.command.build+flash",
+				"title": "Build and flash",
 				"category": "AVR Helper",
-				"enablement": "AVR.command.zap.enabled"
+				"enablement": "AVR.command.build+flash.enabled"
 			}
 		]
 	},

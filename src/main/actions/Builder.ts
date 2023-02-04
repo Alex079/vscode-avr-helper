@@ -94,11 +94,10 @@ const getDependencies = (uri: Uri, emitter: PrintEmitter) => async (src: Sources
   emitter.fireLine(`Working directory: ${uri.fsPath}`);
   while (toBeChecked.length > 0) {
     const info = await runCommand(exe, [...args, ...toBeChecked], uri.fsPath, emitter);
-    if (info.message) {
-      throw new Error(`Error: cannot collect dependencies. ${info.message}`);
+    if (info.status.exitCode !== 0) {
+      throw new Error('Could not collect dependencies.');
     }
-    console.log(`${info.stderr.toString()}`);
-    const newResult = info.stdout.toString()
+    const newResult = info.stdout
       .replace(/\\ /g, '\u0000')
       .replace(/\\[\r\n]+/g, ' ')
       .replace(/\\:/g, ':')
@@ -190,7 +189,7 @@ function build(uri: Uri, emitter: PrintEmitter) {
           .mkdir(dirname(linkable.target), { recursive: true })
           .catch(() => {})
           .then(() => runCommand(exe, [...mcuArgs, ...compilerArgs, ...additionalArgs, '-c', linkable.source, '-o', linkable.target], uri.fsPath, emitter))
-          .then(info => info.message === undefined)
+          .then(info => info.status.exitCode === 0)
         )
       )
       .then(results => {
@@ -205,7 +204,7 @@ function build(uri: Uri, emitter: PrintEmitter) {
         const linkTargets = linkables.map(linkable => linkable.target);
         return runCommand(exe, [...mcuArgs, ...linkerArgs, ...linkTargets, '-o', buildTarget], uri.fsPath, emitter);
       })
-      .then(info => info.message === undefined)
+      .then(info => info.status.exitCode === 0)
       .then(result => {
         emitter.fireIconLine(result, 'Linkage');
         if (!result) {
@@ -217,7 +216,7 @@ function build(uri: Uri, emitter: PrintEmitter) {
           const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) ?? [];
           const objdump = join(dirname(exe), 'avr-objdump');
           return runCommand(objdump, [...disassemblerArgs , buildTarget], uri.fsPath, emitter)
-            .then(info => info.message === undefined
+            .then(info => info.status.exitCode === 0
               ? fs.writeFile(getOutputLst(uri.fsPath), info.stdout)
                   .then(() => true)
                   .catch(error => {
@@ -232,7 +231,7 @@ function build(uri: Uri, emitter: PrintEmitter) {
         if (C.DUMP_HEX.get(uri)) {
           const objcopy = join(dirname(exe), 'avr-objcopy');
           return runCommand(objcopy, ['-Oihex', '-j.text', '-j.data', buildTarget, getOutputHex(uri.fsPath)], uri.fsPath, emitter)
-            .then(info => info.message === undefined)
+            .then(info => info.status.exitCode === 0)
             .then(result => emitter.fireIconLine(result, 'Dumping HEX'));
         }
       })
@@ -241,9 +240,9 @@ function build(uri: Uri, emitter: PrintEmitter) {
         if (reporterArgs.includes('-C')) {
           reporterArgs.push(`--mcu=${devType}`);
         }
-        runCommand(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], uri.fsPath, emitter)
+        return runCommand(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], uri.fsPath, emitter)
           .then(info => {
-            if (info.message === undefined) {
+            if (info.status.exitCode === 0) {
               emitter.fireLine(info.stdout);
             }
           });

@@ -50,10 +50,10 @@ async function getDeviceInfo(uri: Uri, emitter: PrintEmitter): Promise<string[]>
   }
   return runCommand(exe, args, uri.fsPath, emitter)
     .then(info => {
-      if (info.message) {
-        throw new Error('Fetching device info failed.');
+      if (info.status.exitCode === 0) {
+        return info.stderr.split('\n');
       }
-      return info.stderr.split('\n');
+      throw new Error('Fetching device info failed.');
     });
 }
 
@@ -114,7 +114,7 @@ function flashAreas(uri: Uri, emitter: PrintEmitter) {
     args.push(...areas.map(v => v === ERASE ? '-e' : `-U${v}:w:${outputFile}:e`));
     return runCommand(exe, args, uri.fsPath, emitter)
       .then(info => {
-        if (info.message) {
+        if (info.status.exitCode !== 0) {
           throw new Error('Flashing failed.');
         }
       });

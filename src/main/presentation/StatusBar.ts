@@ -4,7 +4,7 @@ import { getContext } from '../utils/Context';
 import { setupDevice, setupProgrammer, setupTools } from '../actions/SetupTools';
 import { performBuildTask } from '../actions/BuildDispatcher';
 import { performFlashTask } from '../actions/FlashDispatcher';
-import { performZapTask } from '../actions/ZapDispatcher';
+import { performBuildFlashTask } from '../actions/BuildFlashDispatcher';
 
 const items: { [key: string]: StatusBarItem } = {};
 
@@ -22,7 +22,7 @@ const SETUP_DEVICE = 'AVR.command.setup.device';
 const SETUP_PROGRAMMER = 'AVR.command.setup.programmer';
 const PERFORM_BUILD = 'AVR.command.build';
 const PERFORM_FLASH = 'AVR.command.flash';
-const PERFORM_ZAP = 'AVR.command.zap';
+const PERFORM_BUILDFLASH = 'AVR.command.build+flash';
 
 const getSetupToolsItem = () => {
   return items[SETUP_TOOLS] ?? (items[SETUP_TOOLS] = getStatusBarItem(
@@ -69,12 +69,12 @@ const getFlashItem = () => {
   ));
 };
 
-const getZapItem = () => {
-  return items[PERFORM_ZAP] ?? (items[PERFORM_ZAP] = getStatusBarItem(
-    PERFORM_ZAP,
-    '$(zap) Zap',
-    'Perform default build and flash binary',
-    performZapTask
+const getBuildFlashItem = () => {
+  return items[PERFORM_BUILDFLASH] ?? (items[PERFORM_BUILDFLASH] = getStatusBarItem(
+    PERFORM_BUILDFLASH,
+    '$(zap) Quick',
+    'Build and flash with default options',
+    performBuildFlashTask
   ));
 };
 
@@ -126,15 +126,15 @@ export const updateFlashItem = (uri: Uri | undefined) => {
   commands.executeCommand('setContext', `${PERFORM_FLASH}.enabled`, show);
 };
 
-export const updateZapItem = (uri: Uri | undefined) => {
-  const item = getZapItem();
+export const updateBuildFlashItem = (uri: Uri | undefined) => {
+  const item = getBuildFlashItem();
   const show = uri ? getBuildItemFlag(uri) : false;
   if (show) {
     item.show();
   } else {
     item.hide();
   }
-  commands.executeCommand('setContext', `${PERFORM_ZAP}.enabled`, show);
+  commands.executeCommand('setContext', `${PERFORM_BUILDFLASH}.enabled`, show);
 };
 
 const getSetupDeviceItemText = (uri: Uri): string =>
