@@ -250,7 +250,7 @@ export async function pickMany(placeholder: string, items: QuickPickItem[], acti
                       step: number | undefined = undefined, totalSteps: number | undefined = undefined): Promise<readonly QuickPickItem[]> {
   const picker = window.createQuickPick();
   picker.items = items;
-  picker.activeItems = items.filter(active);
+  picker.selectedItems = items.filter(active);
   picker.ignoreFocusOut = true;
   picker.canSelectMany = true;
   picker.step = step;

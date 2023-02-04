@@ -23,10 +23,10 @@ export function setupTools(): Promise<void> {
       const uri = folder.uri;
       return prepareConfigFiles(uri)
         .then(() => pickFile('Full path to compiler executable', C.COMPILER.get(uri), true, true, false, 1, 4))
-        .then(newCompiler => {
+        .then(async newCompiler => {
           const oldCompiler = C.COMPILER.get(uri);
           if (newCompiler && (oldCompiler !== newCompiler)) {
-            C.REPORTER_ARGS.set(uri, [getSizeFormat(uri, dirname(newCompiler))]);
+            C.REPORTER_ARGS.set(uri, [await getSizeFormat(uri, dirname(newCompiler))]);
           }
           C.COMPILER.set(uri, newCompiler);
         })

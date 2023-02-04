@@ -229,6 +229,12 @@
 				"title": "Flash",
 				"category": "AVR Helper",
 				"enablement": "AVR.command.flash.enabled"
+			},
+			{
+				"command": "AVR.command.zap",
+				"title": "Zap",
+				"category": "AVR Helper",
+				"enablement": "AVR.command.zap.enabled"
 			}
 		]
 	},

@@ -1,24 +1,49 @@
-import { SpawnSyncReturns, spawnSync } from "child_process";
-import { EventEmitter } from "vscode";
+import { spawn } from "child_process";
+import { PrintEmitter } from "./Terminal";
 
-export function runCommand(exe: string, args: string[], cwd: string, emitter: EventEmitter<string>): SpawnSyncReturns<Buffer> {
-  emitter.fire(`\nCommand: ${exe} ${args.join(' ')}`);
-  return runCommandStandalone(exe, args, cwd);
+interface ProcessInfo {
+  stdout: string,
+  stderr: string,
+  message?: string
 }
 
-export function runCommandStandalone(exe: string, args: string[], cwd: string): SpawnSyncReturns<Buffer> {
+export function runCommand(exe: string, args: string[], cwd: string, emitter?: PrintEmitter): Promise<ProcessInfo> {
+  if (emitter) { emitter.fireLine(`\nCommand: ${exe} ${args.join(' ')}`); }
   console.log(`Command: ${exe} ${args.join(' ')}`);
-  return spawnSync(exe, args, { cwd });
-}
-
-export function checkInfo(info: SpawnSyncReturns<Buffer>, emitter: EventEmitter<string>): boolean {
-  if (info.error) {
-    emitter.fire(info.error.message);
-    return false;
-  }
-  emitter.fire(info.stderr.toString());
-  if (info.status && info.status > 0) {
-    return false;
-  }
-  return true;
+  const process = spawn(exe, args, { cwd });
+  return Promise.all([
+    new Promise<string>(resolve => {
+      var stdout = '';
+      process.stdout
+        .on('data', rawChunk => {
+          const chunk = rawChunk.toString();
+          stdout += chunk;
+        })
+        .on('end', () => {
+          resolve(stdout);
+        });
+    }),
+    new Promise<string>(resolve => {
+      var result = '';
+      process.stderr
+        .on('data', rawChunk => {
+          const chunk = rawChunk.toString();
+          result += chunk;
+          if (emitter) { emitter.fire(chunk); }
+        })
+        .on('end', () => {
+          resolve(result);
+        });
+    }),
+    new Promise<string | undefined>(resolve => {
+      process
+        .on('exit', code => {
+          resolve(code === 0 ? undefined : `${code}`);
+        })
+        .on('error', error => {
+          resolve(error.message);
+        });
+    })
+  ])
+  .then(([stdout, stderr, message]) => ({stdout, stderr, message}));
 }

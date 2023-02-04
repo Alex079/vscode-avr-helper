@@ -1,8 +1,18 @@
 import { Event, EventEmitter, Pseudoterminal } from "vscode";
 
-class PrintEmitter extends EventEmitter<string> {
+const icon = (result: boolean) => result ? '✅' : '❌';
+
+export class PrintEmitter extends EventEmitter<string> {
   fire(data: string): void {
-    super.fire(data?.replace(/(\r\n|\r(?!\n)|(?<!\r)\n)/g, '\r\n'));
+    super.fire(data.replace(/(\r(?!\n)|(?<!\r)\n)/g, '\r\n'));
+  }
+  fireLine(data: string): void {
+    this.fire(data);
+    super.fire('\r\n');
+  }
+  fireIconLine(result: boolean, data?: string): void {
+    super.fire(icon(result) );
+    if (data) { super.fire(data); }
     super.fire('\r\n');
   }
 }

@@ -1,7 +1,7 @@
 import { ConfigurationChangeEvent, Uri, window, workspace } from 'vscode';
 import * as C from '../utils/Conf';
 import { propagateSettings } from '../actions/Propagator';
-import { updateBuildItem, updateFlashItem, updateSetupDeviceItem, updateSetupProgrammerItem } from '../presentation/StatusBar';
+import { updateBuildItem, updateFlashItem, updateSetupDeviceItem, updateSetupProgrammerItem, updateZapItem } from '../presentation/StatusBar';
 
 export function onChangeConfiguration(event: ConfigurationChangeEvent): void {
   if (!workspace.workspaceFolders) {
@@ -46,6 +46,7 @@ function updateStatusBar(): void {
   updateSetupProgrammerItem(uri);
   updateBuildItem(uri);
   updateFlashItem(uri);
+  updateZapItem(uri);
 }
 
 export const onChangeWorkspaceFolder = updateStatusBar;
