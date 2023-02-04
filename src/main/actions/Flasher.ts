@@ -13,7 +13,7 @@ const fromItem = (i: QuickPickItem): string => i.label;
 export const performFlash = (uri: Uri, emitter: PrintEmitter) =>
   getDeviceInfo(uri, emitter)
     .then(parseMemoryAreas)
-    .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), item => item.label === DEFAULT_AREA))
+    .then(areas => pickMany('Select areas to flash', [ERASE, ...areas].map(toItem), item => item.label === DEFAULT_AREA).catch(() => []))
     .then(areas => areas.map(fromItem))
     .then(flashAreas(uri, emitter))
     .then(() => emitter.fireIconLine(true));
