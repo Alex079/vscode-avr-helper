@@ -1,21 +1,15 @@
 import { promises as fs } from 'fs';
-import { CustomExecution, EventEmitter, QuickPickItem, Task, TaskScope, Uri, WorkspaceFolder, tasks, window } from "vscode";
+import { Uri } from "vscode";
 import * as C from '../utils/Conf';
 import { getOutputElf, getOutputHex, getOutputLst, getOutputObj, getOutputRoot } from "../utils/Files";
-import { pickFolder, pickOne } from "../presentation/Inputs";
 import { fdir } from "fdir";
 import { basename, dirname, join, normalize, sep } from 'path';
-import { AvrTaskTerminal } from './Terminal';
-import { checkInfo, runCommand } from './Spawner';
-
-const GOALS = ['build', 'clean', 'scan'];
-const DEFAULT_GOAL = 'build';
+import { runCommand } from './Spawner';
+import { PrintEmitter } from './Terminal';
 
 const ANY_HEADER = /\.h(h|pp|xx|\+\+)?$/i;
 const ANY_SOURCE = /\.c(c|pp|xx|\+\+)?$/i;
 
-const toItem = (label: string): QuickPickItem => ({ label });
-const fromItem = (i: QuickPickItem): string => i.label;
 const hidden = (i: string) => i.startsWith('.');
 
 const crawlSrc = (uri: Uri) => (dir: string) =>
@@ -54,68 +48,23 @@ interface Linkable {
   needsRebuilding: boolean;
 }
 
-export function performBuildTask(): Promise<void> {
-  return pickFolder()
-    .then(folder => 
-      pickOne('Select build goal', GOALS.map(toItem), item => item.label === DEFAULT_GOAL)
-        .then(fromItem)
-        .then(dispatch(folder))
-    )
-    .catch(console.log);
-}
+export const performScan = (uri: Uri, emitter: PrintEmitter) => 
+  getSources(uri)
+    .then(getDependencies(uri, emitter))
+    .then(getLinkables(uri))
+    .then(printInfo(uri, emitter))
+    .then(() => emitter.fireIconLine(true));
 
-const dispatch = (folder: WorkspaceFolder) => (goal: string): void => {
-  const uri = folder.uri;
-  switch (goal) {
-    case 'scan':
-      tasks.executeTask(new Task({type: 'AVR.build'}, folder ?? TaskScope.Workspace, `🔍 ${new Date()}`, 'AVR Helper',
-        new CustomExecution(async () => new AvrTaskTerminal(emitter =>
-          getSources(uri)
-            .then(getDependencies(uri, emitter))
-            .then(getLinkables(uri))
-            .then(printInfo(uri, emitter))
-            .catch(askToRebuildFolderAfterError(folder))
-        ))
-      ));
-      break;
-    case 'clean':
-      tasks.executeTask(new Task({type: 'AVR.build'}, folder ?? TaskScope.Workspace, `🧹 ${new Date()}`, 'AVR Helper',
-        new CustomExecution(async () => new AvrTaskTerminal(emitter =>
-          clean(uri, emitter)
-        ))
-      ));
-      break;
-    case 'build':
-      tasks.executeTask(new Task({type: 'AVR.build'}, folder ?? TaskScope.Workspace, `🔧 ${new Date()}`, 'AVR Helper',
-        new CustomExecution(async () => new AvrTaskTerminal(emitter =>
-          getSources(uri)
-            .then(getDependencies(uri, emitter))
-            .then(getLinkables(uri))
-            .then(build(uri, emitter))
-            .then(() => emitter.fire('✅'))
-            .catch(askToRebuildFolderAfterError(folder))
-        )), C.HIGHLIGHT.get(uri) ? '$gcc' : undefined
-      ));
-      break;
-  }
-};
+export const performBuild = (uri: Uri, emitter: PrintEmitter) => 
+  getSources(uri)
+    .then(getDependencies(uri, emitter))
+    .then(getLinkables(uri))
+    .then(build(uri, emitter))
+    .then(() => emitter.fireIconLine(true));
 
-export const askToRebuildFolderAfterError = (folder: WorkspaceFolder) => (reason: object): void => {
-  console.log(`${reason}`);
-  window.showErrorMessage(`${reason}`, ...GOALS)
-    .then(goal => {
-      if (goal) {
-        dispatch(folder)(goal);
-      }
-    });
-};
-
-function clean(uri: Uri, emitter: EventEmitter<string>): Promise<void> {
-  return fs
-    .rm(getOutputRoot(uri.fsPath), { recursive: true, force: true })
-    .then(() => emitter.fire('✅'))
-    .catch(error => emitter.fire(`❌ ${error}`));
-}
+export const performClean = (uri: Uri, emitter: PrintEmitter) => 
+  fs.rm(getOutputRoot(uri.fsPath), { recursive: true, force: true })
+    .then(() => emitter.fireIconLine(true));
 
 function getSources(uri: Uri): Promise<Sources> {
   const extLibraries = C.LIBRARIES.get(uri) ?? [];
@@ -123,7 +72,7 @@ function getSources(uri: Uri): Promise<Sources> {
     .then(([thisFolder, extFolders]): Sources => ({ thisFolder, extFolders }));
 }
 
-const getDependencies = (uri: Uri, emitter: EventEmitter<string>) => async (src: Sources): Promise<string[]> => {
+const getDependencies = (uri: Uri, emitter: PrintEmitter) => async (src: Sources): Promise<string[]> => {
   const exe = C.COMPILER.get(uri);
   const devType = C.DEVICE_TYPE.get(uri);
   if (!exe || !devType) {
@@ -142,17 +91,13 @@ const getDependencies = (uri: Uri, emitter: EventEmitter<string>) => async (src:
   let toBeChecked: string[] = src.thisFolder;
   let unused: string[] = src.extFolders;
   let result: string[] = [];
-  emitter.fire(`Working directory: ${uri.fsPath}`);
+  emitter.fireLine(`Working directory: ${uri.fsPath}`);
   while (toBeChecked.length > 0) {
-    const info = runCommand(exe, [...args, ...toBeChecked], uri.fsPath, emitter);
-    if (info.error) {
-      throw new Error(`Error: cannot collect dependencies. ${info.error.message}`);
+    const info = await runCommand(exe, [...args, ...toBeChecked], uri.fsPath, emitter);
+    if (info.status.exitCode !== 0) {
+      throw new Error('Could not collect dependencies.');
     }
-    if (info.status && info.status > 0) {
-      throw new Error(`Error ${info.status}: cannot collect dependencies. ${info.stderr.toString()}`);
-    }
-    console.log(`${info.stderr.toString()}`);
-    const newResult = info.stdout.toString()
+    const newResult = info.stdout
       .replace(/\\ /g, '\u0000')
       .replace(/\\[\r\n]+/g, ' ')
       .replace(/\\:/g, ':')
@@ -214,7 +159,7 @@ function getLinkable(dependencies: FileTime[]): Linkable {
   };
 }
 
-function build(uri: Uri, emitter: EventEmitter<string>) {
+function build(uri: Uri, emitter: PrintEmitter) {
   return async (linkables: Linkable[]): Promise<void> => {
     const exe = C.COMPILER.get(uri);
     const devType = C.DEVICE_TYPE.get(uri);
@@ -243,15 +188,13 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
         .map(linkable => fs
           .mkdir(dirname(linkable.target), { recursive: true })
           .catch(() => {})
-          .then(() => {
-            const info = runCommand(exe, [...mcuArgs, ...compilerArgs, ...additionalArgs, '-c', linkable.source, '-o', linkable.target], uri.fsPath, emitter);
-            return checkInfo(info, emitter);
-          })
+          .then(() => runCommand(exe, [...mcuArgs, ...compilerArgs, ...additionalArgs, '-c', linkable.source, '-o', linkable.target], uri.fsPath, emitter))
+          .then(info => info.status.exitCode === 0)
         )
       )
       .then(results => {
         const result = results.every(success => success);
-        emitter.fire(`${icon(result)} Compilation`);
+        emitter.fireIconLine(result, 'Compilation');
         if (!result) {
           throw new Error('Compilation failed.');
         }
@@ -259,11 +202,11 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
       .then(() => {
         const linkerArgs = C.LINKER_ARGS.get(uri) ?? [];
         const linkTargets = linkables.map(linkable => linkable.target);
-        const info = runCommand(exe, [...mcuArgs, ...linkerArgs, ...linkTargets, '-o', buildTarget], uri.fsPath, emitter);
-        return checkInfo(info, emitter);
+        return runCommand(exe, [...mcuArgs, ...linkerArgs, ...linkTargets, '-o', buildTarget], uri.fsPath, emitter);
       })
+      .then(info => info.status.exitCode === 0)
       .then(result => {
-        emitter.fire(`${icon(result)} Linkage`);
+        emitter.fireIconLine(result, 'Linkage');
         if (!result) {
           throw new Error('Linkage failed.');
         }
@@ -272,25 +215,24 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
         if (C.DUMP_LST.get(uri)) {
           const disassemblerArgs: string[] = C.DISASM_ARGS.get(uri) ?? [];
           const objdump = join(dirname(exe), 'avr-objdump');
-          const info = runCommand(objdump, [...disassemblerArgs , buildTarget], uri.fsPath, emitter);
-          return (
-            checkInfo(info, emitter)
+          return runCommand(objdump, [...disassemblerArgs , buildTarget], uri.fsPath, emitter)
+            .then(info => info.status.exitCode === 0
               ? fs.writeFile(getOutputLst(uri.fsPath), info.stdout)
                   .then(() => true)
                   .catch(error => {
-                    emitter.fire(`${error}`);
+                    emitter.fireLine(`${error}`);
                     return false;
                   })
-              : Promise.resolve(false))
-            .then(result => emitter.fire(`${icon(result)} Disassembling`));
+              : false)
+            .then(result => emitter.fireIconLine(result, 'Disassembling'));
         }
       })
-      .then(() => {
+      .then(async () => {
         if (C.DUMP_HEX.get(uri)) {
           const objcopy = join(dirname(exe), 'avr-objcopy');
-          const info = runCommand(objcopy, ['-Oihex', '-j.text', '-j.data', buildTarget, getOutputHex(uri.fsPath)], uri.fsPath, emitter);
-          const result = checkInfo(info, emitter);
-          return emitter.fire(`${icon(result)} Dumping HEX`);
+          return runCommand(objcopy, ['-Oihex', '-j.text', '-j.data', buildTarget, getOutputHex(uri.fsPath)], uri.fsPath, emitter)
+            .then(info => info.status.exitCode === 0)
+            .then(result => emitter.fireIconLine(result, 'Dumping HEX'));
         }
       })
       .then(() => {
@@ -298,24 +240,24 @@ function build(uri: Uri, emitter: EventEmitter<string>) {
         if (reporterArgs.includes('-C')) {
           reporterArgs.push(`--mcu=${devType}`);
         }
-        const info = runCommand(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], uri.fsPath, emitter);
-        if (checkInfo(info, emitter)) {
-          emitter.fire(info.stdout.toString());
-        }
+        return runCommand(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], uri.fsPath, emitter)
+          .then(info => {
+            if (info.status.exitCode === 0) {
+              emitter.fireLine(info.stdout);
+            }
+          });
       });
   };
 }
 
-const icon = (result: boolean) => result ? '✅' : '❌';
-
-function printInfo(uri: Uri, emitter: EventEmitter<string>) {
+function printInfo(uri: Uri, emitter: PrintEmitter) {
   return (linkables: Linkable[]): void => {
     linkables.forEach((linkable, index) => {
       const search: string = `${uri.fsPath}${sep}`;
-      emitter.fire(`${index === 0 ? ' ' : '│'} ┌─${linkable.source.replace(search, '')}`);
-      emitter.fire(`${index === 0 ? '┌' : '├'}─${linkable.needsRebuilding ? '✖' : '┴'}─${linkable.target.replace(search, '')}`);
-      emitter.fire('│');
+      emitter.fireLine(`${index === 0 ? ' ' : '│'} ┌─${linkable.source.replace(search, '')}`);
+      emitter.fireLine(`${index === 0 ? '┌' : '├'}─${linkable.needsRebuilding ? '✖' : '┴'}─${linkable.target.replace(search, '')}`);
+      emitter.fireLine('│');
     });
-    emitter.fire(`└─► Build Target\n`);
+    emitter.fireLine(  `└─► Build Target\n`);
   };
 }

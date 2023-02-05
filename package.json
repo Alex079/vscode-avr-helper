@@ -17,7 +17,7 @@
 		"url": "https://github.com/Alex079/vscode-avr-helper"
 	},
 	"publisher": "Alex079",
-	"version": "2.1.1",
+	"version": "2.2.0",
 	"engines": {
 		"vscode": "^1.64.2"
 	},
@@ -229,6 +229,12 @@
 				"title": "Flash",
 				"category": "AVR Helper",
 				"enablement": "AVR.command.flash.enabled"
+			},
+			{
+				"command": "AVR.command.build+flash",
+				"title": "Build and flash",
+				"category": "AVR Helper",
+				"enablement": "AVR.command.build+flash.enabled"
 			}
 		]
 	},
