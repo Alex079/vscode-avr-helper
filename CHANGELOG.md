@@ -3,7 +3,7 @@
 - Output generated shell commands
 - Suggest "flash" memory by default
 - Add a new "Quick" command which combines default "Build" and "Flash"
-- Move "build" forlder into project level
+- Move "build" folder into project level
 - Spawn async shell processes
 - Minor improvements and cleanup
 
