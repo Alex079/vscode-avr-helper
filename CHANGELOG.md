@@ -1,3 +1,12 @@
+## v2.2.0
+- Make "Flash" task a custom execution
+- Output generated shell commands
+- Suggest "flash" memory by default
+- Add a new "Quick" command which combines default "Build" and "Flash"
+- Move "build" forlder into project level
+- Spawn async shell processes
+- Minor improvements and cleanup
+
 ## v2.1.0
 
 - Highlight build action by default
