@@ -1,5 +1,4 @@
-import { spawn } from "child_process";
-import { exitCode } from "process";
+import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { PrintEmitter } from "./Terminal";
 
 interface ProcessStatus {
@@ -22,38 +21,9 @@ export function runCommand(exe: string, args: string[], cwd: string, emitter?: P
   }
   const process = spawn(exe, args, { cwd });
   return Promise.all([
-    new Promise<string>(resolve => {
-      var stdout = '';
-      process.stdout
-        .on('data', rawChunk => {
-          const chunk = rawChunk.toString();
-          stdout += chunk;
-        })
-        .on('end', () => {
-          resolve(stdout);
-        });
-    }),
-    new Promise<string>(resolve => {
-      var result = '';
-      process.stderr
-        .on('data', rawChunk => {
-          const chunk = rawChunk.toString();
-          result += chunk;
-          if (emitter) { emitter.fire(chunk); }
-        })
-        .on('end', () => {
-          resolve(result);
-        });
-    }),
-    new Promise<ProcessStatus>(resolve => {
-      process
-        .on('exit', code => {
-          resolve({exitCode: code ?? undefined});
-        })
-        .on('error', error => {
-          resolve({errorMessage: error.message});
-        });
-    })
+    resolveStdout(process),
+    resolveStderr(process, emitter),
+    resolveStatus(process)
   ])
   .then(([stdout, stderr, status]) => {
     if (status.errorMessage) {
@@ -66,5 +36,46 @@ export function runCommand(exe: string, args: string[], cwd: string, emitter?: P
       }
     }
     return {stdout, stderr, status};
+  });
+}
+
+function resolveStdout(process: ChildProcessWithoutNullStreams): Promise<string> {
+  return new Promise<string>(resolve => {
+    var stdout = '';
+    process.stdout
+      .on('data', rawChunk => {
+        const chunk = rawChunk.toString();
+        stdout += chunk;
+      })
+      .on('end', () => {
+        resolve(stdout);
+      });
+  });
+}
+
+function resolveStderr(process: ChildProcessWithoutNullStreams, emitter: PrintEmitter | undefined): Promise<string> {
+  return new Promise<string>(resolve => {
+    var result = '';
+    process.stderr
+      .on('data', rawChunk => {
+        const chunk = rawChunk.toString();
+        result += chunk;
+        if (emitter) { emitter.fire(chunk); }
+      })
+      .on('end', () => {
+        resolve(result);
+      });
+  });
+}
+
+function resolveStatus(process: ChildProcessWithoutNullStreams): Promise<ProcessStatus> {
+  return new Promise<ProcessStatus>(resolve => {
+    process
+      .on('exit', code => {
+        resolve({ exitCode: code ?? undefined });
+      })
+      .on('error', error => {
+        resolve({ errorMessage: error.message });
+      });
   });
 }

@@ -11,8 +11,8 @@ export class PrintEmitter extends EventEmitter<string> {
     super.fire('\r\n');
   }
   fireIconLine(result: boolean, data?: string): void {
-    super.fire(icon(result) );
-    if (data) { super.fire(data); }
+    super.fire(icon(result));
+    if (data) { this.fire(` ${data}`); }
     super.fire('\r\n');
   }
 }
