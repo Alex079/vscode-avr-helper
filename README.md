@@ -1,14 +1,25 @@
 # AVR Helper Extension
 
-Helper extension to simplify code compilation and flashing for AVR chips. This extension allows building and flashing executable for AVR from C/C++ source files. It needs avr-gcc and avrdude installed. It uses C/C++ extension to provide language support.
+Helper extension to simplify code compilation and flashing for AVR MCUs.
+
+This extension allows building and flashing executable code for AVR from C/C++ source files. It needs `avr-gcc` and `avrdude` installed. It uses `C/C++` extension to provide language support.
+
+## How it works
+
+The goal of the extension is to provide a visual way of automating routine build and flash tasks.
+
+The `AVR Helper` extension acts as a bridge between user-provided tools and does not include any MCU support code explicitly. The extension configuration leverages VSCode settings architecture.
+
+Device list, programmer list, memory areas data is coming from `avrdude` output. The user is free to reconfigure the tools as required.
+The `C/C++` extension is configured with user-provided `avr-gcc` and external source code libraries.
 
 ## Features
 
-Demo: source highlighting and build.
+Demo: source highlighting, building and flashing.
 
-![Demo: source highlighting, building and flashing](https://github.com/Alex079/vscode-avr-helper/wiki/images/setup-build-flash-v2.gif)
+![Demo: source highlighting, building and flashing](https://github.com/Alex079/vscode-avr-helper/wiki/images/setup-build-flash-v3.gif)
 
-The AVR Helper adds five items to the window status bar:
+The AVR Helper adds six items to the window status bar:
 
 ### Status bar: AVR (command: Perform initial setup)
 
@@ -42,12 +53,12 @@ This item displays and allows for selecting programmer type, port, and baud rate
 
 Displayed as `Build`
 
-This item triggers make of a currently open folder or a folder of currently displayed file. There are three options:
-- build: compile, link, disassemble, display ELF information
-- clean: remove the build output
-- scan: list all C/C++ files which will be used for build
+This item triggers building of a currently open folder or a folder of currently displayed file. There are three options:
+- Build: compile, link, disassemble, display ELF information
+- Clean: remove the build output
+- Scan: list all C/C++ files which will be used for build
 
-The result of build is `output.elf` and `output.lst` files in `.vscode/avr.build` folder.
+The result of the build is `output.elf` file (optionally `output.lst` and `output.hex` as well) in the `build` folder.
 
 ### Status bar: Flash (command: Flash)
 
@@ -55,10 +66,17 @@ Displayed as `Flash`
 
 This item triggers a connection to the device using the programmer to list all available memory areas of the currently connected device. The user can select memory areas to flash, these areas must be present in `output.elf` file sections for the operation to succeed. The build has to be run successfully and produce `output.elf` file before flashing.
 
+### Status bar: Quick (command: Build and flash)
+
+Displayed as `Quick`
+
+This item triggers building and flashing with default options. This is equivalent to executing "Build" with option "Build" selected, skiping device check and immediately executing "Flash" with option "flash" selected.
+
+
 ## Requirements
 
 - avr-gcc (compilation)
-- avrdude (programmer driver)
+- avrdude (programmer driver and device capabilities)
 - C/C++ extension (language support)
 
 ## Known Issues
