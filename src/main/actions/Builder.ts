@@ -241,7 +241,7 @@ function build(uri: Uri, emitter: PrintEmitter) {
         if (reporterArgs.includes('-C')) {
           mcuArgs.push(`--mcu=${devType}`);
         }
-        return runCommand(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], uri.fsPath, emitter)
+        return runCommand(join(dirname(exe), 'avr-size'), [...reporterArgs, ...mcuArgs, buildTarget], uri.fsPath, emitter)
           .then(info => {
             if (info.status.exitCode === 0) {
               emitter.fireLine(info.stdout);
