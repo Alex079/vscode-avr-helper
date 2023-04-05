@@ -237,8 +237,9 @@ function build(uri: Uri, emitter: PrintEmitter) {
       })
       .then(() => {
         const reporterArgs = C.REPORTER_ARGS.get(uri) ?? [];
+        const mcuArgs = [];
         if (reporterArgs.includes('-C')) {
-          reporterArgs.push(`--mcu=${devType}`);
+          mcuArgs.push(`--mcu=${devType}`);
         }
         return runCommand(join(dirname(exe), 'avr-size'), [...reporterArgs, buildTarget], uri.fsPath, emitter)
           .then(info => {
@@ -255,9 +256,9 @@ function printInfo(uri: Uri, emitter: PrintEmitter) {
     linkables.forEach((linkable, index) => {
       const search: string = `${uri.fsPath}${sep}`;
       emitter.fireLine(`${index === 0 ? ' ' : '│'} ┌─${linkable.source.replace(search, '')}`);
-      emitter.fireLine(`${index === 0 ? '┌' : '├'}─${linkable.needsRebuilding ? '✖' : '┴'}─${linkable.target.replace(search, '')}`);
+      emitter.fireLine(`${index === 0 ? '┌' : '├'}─${linkable.needsRebuilding ? 'X' : '┴'}─${linkable.target.replace(search, '')}`);
       emitter.fireLine('│');
     });
-    emitter.fireLine(  `└─► Build Target\n`);
+    emitter.fireLine(  `└─> Build Target\n`);
   };
 }
