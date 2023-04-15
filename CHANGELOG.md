@@ -1,3 +1,6 @@
+## v2.2.1
+- Fix arguments duplication for Atmel version of avr-size
+
 ## v2.2.0
 - Make "Flash" task a custom execution
 - Output generated shell commands
