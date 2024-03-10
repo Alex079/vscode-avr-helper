@@ -8,8 +8,8 @@ const nodeExternals = require('webpack-node-externals');
 
 /**@type {import('webpack').Configuration}*/
 module.exports = {
-  mode: "none",
-  devtool: 'inline-source-map',
+  mode: 'production',
+  devtool: 'source-map',
   target: 'node',
   node: {
     __dirname: false,

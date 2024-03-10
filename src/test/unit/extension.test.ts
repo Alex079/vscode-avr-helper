@@ -1,14 +1,13 @@
 import * as assert from 'assert';
 import { promises as fs } from 'fs';
 import { propagateSettings } from '../../main/actions/Propagator';
-import { getProperties, getSizeFormat } from '../../main/actions/ToolsCapabilities';
 import { pickFolder } from '../../main/presentation/Inputs';
 import { join } from 'path';
 
 suite('Actions Test Suite', () => {
-
+  
   test('Pick folder and propagate C/C++ defaults', () => {
-    return pickFolder().then(folder => 
+        return pickFolder().then(folder => 
       propagateSettings(folder.uri)
         .then(() => fs.readFile(join(folder.uri.fsPath, '.vscode', 'c_cpp_properties.json')))
         .then(buffer => JSON.parse(buffer.toString()))
