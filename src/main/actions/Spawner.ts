@@ -12,14 +12,18 @@ interface ProcessInfo {
   status: ProcessStatus
 }
 
-export function runCommand(exe: string, args: string[], cwd: string, emitter?: PrintEmitter): Promise<ProcessInfo> {
+export function runCommand(exe: string, args: string[], cwd: string, emitter?: PrintEmitter, command?: string): Promise<ProcessInfo> {
   if (emitter) {
-    emitter.fireLine(`\nCommand: ${exe} ${args.join(' ')}`);
+    emitter.fireLine(`\nCommand: ${command ? 'echo ' + command + ' | ' : ''}${exe} ${args.join(' ')}`);
   }
   else {
-    console.log(`Command: ${exe} ${args.join(' ')}`);
+    console.log(`Command: ${command ? 'echo ' + command + ' | ' : ''}${exe} ${args.join(' ')}`);
   }
-  const process = spawn(exe, args, { cwd });
+  const process = spawn(exe, args, { cwd, stdio: command ? 'pipe' : undefined });
+  if (command) {
+    process.stdin.write(`${command}\n`);
+    process.stdin.end();
+  }
   return Promise.all([
     resolveStdout(process),
     resolveStderr(process, emitter),
@@ -41,7 +45,7 @@ export function runCommand(exe: string, args: string[], cwd: string, emitter?: P
 
 function resolveStdout(process: ChildProcessWithoutNullStreams): Promise<string> {
   return new Promise<string>(resolve => {
-    var stdout = '';
+    let stdout = '';
     process.stdout
       .on('data', rawChunk => {
         const chunk = rawChunk.toString();
@@ -55,7 +59,7 @@ function resolveStdout(process: ChildProcessWithoutNullStreams): Promise<string>
 
 function resolveStderr(process: ChildProcessWithoutNullStreams, emitter: PrintEmitter | undefined): Promise<string> {
   return new Promise<string>(resolve => {
-    var result = '';
+    let result = '';
     process.stderr
       .on('data', rawChunk => {
         const chunk = rawChunk.toString();

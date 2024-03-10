@@ -5,9 +5,9 @@ import * as C from '../utils/Conf';
 import { runCommand } from './Spawner';
 import { PrintEmitter } from './Terminal';
 
-const ERASE: string = '(erase chip)';
+const ERASE: [string, string] = ['(erase chip)', ''];
 const DEFAULT_AREA: string = 'flash';
-const toItem = (label: string): QuickPickItem => ({ label });
+const toItem = ([label, description]: [string, string]): QuickPickItem => ({ label, description });
 const fromItem = (i: QuickPickItem): string => i.label;
 
 export const performFlash = (uri: Uri, emitter: PrintEmitter) =>
@@ -32,50 +32,39 @@ async function getDeviceInfo(uri: Uri, emitter: PrintEmitter): Promise<string[]>
   }
   const args: string[] = [
     ...C.PROGRAMMER_ARGS.get(uri) ?? [],
-    '-v',
+    '-q', '-q',
     '-p', devType,
-    '-c', progType
+    '-c', 'dryrun',
+    '-t'
   ];
   const defs = C.PROG_DEFS.get(uri);
   if (defs) {
     args.push('-C', defs);
   }
-  const port = C.PROG_PORT.get(uri);
-  if (port) {
-    args.push('-P', port);
-  }
-  const rate = C.PROG_RATE.get(uri);
-  if (rate) {
-    args.push('-b', `${rate}`);
-  }
-  return runCommand(exe, args, uri.fsPath, emitter)
+  return runCommand(exe, args, uri.fsPath, emitter, 'part')
     .then(info => {
       if (info.status.exitCode === 0) {
-        return info.stderr.split('\n');
+        return info.stdout.split('\n');
       }
       throw new Error('Fetching device info failed.');
     });
 }
 
-function parseMemoryAreas(lines: string[]): string[] {
+function parseMemoryAreas(lines: string[]): [string, string][] {
   let memoryIsFound: boolean = false;
-  const result: string[] = [];
+  const result: [string, string][] = [];
   lines.forEach(line => {
     if (memoryIsFound) {
       if (line === '') {
         memoryIsFound = false;
       }
-      else {
-        const description = /\S+/.exec(line)?.[0];
-        if (description && description !== '-----------') {
-          result.push(description);
-        }
+      else if (line && !line.startsWith('-')) {
+        const [name, size] = line.matchAll(/\S+/g);
+        result.push([name[0], `(${size[0]} B)`]);
       }
     }
-    else {
-      if (/^\s*Memory Type/.test(line)) {
-        memoryIsFound = true;
-      }
+    else if (/^\s*Memory/.test(line)) {
+      memoryIsFound = true;
     }
   });
   return result;
@@ -111,7 +100,7 @@ function flashAreas(uri: Uri, emitter: PrintEmitter) {
       args.push('-b', `${rate}`);
     }
     const outputFile = getOutputElf(uri.fsPath);
-    args.push(...areas.map(v => v === ERASE ? '-e' : `-U${v}:w:${outputFile}:e`));
+    args.push(...areas.map(v => v === ERASE[0] ? '-e' : `-U${v}:w:${outputFile}:e`));
     return runCommand(exe, args, uri.fsPath, emitter)
       .then(info => {
         if (info.status.exitCode !== 0) {
