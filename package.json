@@ -245,7 +245,7 @@
 		"clean": "rm -rf out dist *.vsix",
 		"pretest": "yarn lint && yarn clean-test && tsc",
 		"test-unit": "vscode-test",
-		"test-ext": "extest setup-and-run -y -s .vscode-test -e out/extensions -m mocha.json out/test/ext/**/*.test.js",
+		"test-ext": "extest setup-and-run -y -s .vscode-test -e out/extensions out/test/ext/**/*.test.js",
 		"test": "yarn test-unit ; yarn test-ext",
 		"package": "webpack",
 		"vscode:prepublish": "yarn clean-dist && yarn package"
