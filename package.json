@@ -73,6 +73,8 @@
 							"-fpermissive",
 							"-fno-exceptions",
 							"-fno-threadsafe-statics",
+							"-ffunction-sections",
+							"-fdata-sections",
 							"-pipe"
 						],
 						"scope": "resource",
@@ -84,8 +86,7 @@
 							"type": "string"
 						},
 						"default": [
-							"-ffunction-sections",
-							"-fdata-sections",
+							"-Wl,--gc-sections",
 							"-pipe"
 						],
 						"scope": "resource",
