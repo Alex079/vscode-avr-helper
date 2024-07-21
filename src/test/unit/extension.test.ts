@@ -1,7 +1,6 @@
 import * as assert from 'assert';
 import { promises as fs } from 'fs';
 import { propagateSettings } from '../../main/actions/Propagator';
-import { getProperties, getSizeFormat } from '../../main/actions/ToolsCapabilities';
 import { pickFolder } from '../../main/presentation/Inputs';
 import { join } from 'path';
 
@@ -28,6 +27,8 @@ suite('Actions Test Suite', () => {
             "-fpermissive",
             "-fno-exceptions",
             "-fno-threadsafe-statics",
+            "-ffunction-sections",
+            "-fdata-sections",
             "-pipe"
           ]);
         })
