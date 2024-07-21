@@ -1,3 +1,6 @@
+## v2.2.2
+- Fix compiler and linker default arguments
+
 ## v2.2.1
 - Fix arguments duplication for Atmel version of avr-size
 
