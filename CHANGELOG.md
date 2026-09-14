@@ -1,3 +1,7 @@
+## v2.3.0
+- Update dependencies: TypeScript 6, ESLint 9, @typescript-eslint 8, mocha 11, glob 11, @types/node 24
+- Migrate ESLint configuration to the flat config format
+
 ## v2.2.2
 - Fix compiler and linker default arguments
 
