@@ -9,7 +9,7 @@ async function main() {
     const extensionTestsPath = __dirname;
     const exitCode = await fs
       .mkdtemp(join(tmpdir(), 'avr-helper-test-'))
-      .then(extensionWorkspacePath => runTests({ extensionDevelopmentPath, extensionTestsPath, launchArgs: ['--disable-extensions', extensionWorkspacePath] }));
+      .then(extensionWorkspacePath => runTests({ extensionDevelopmentPath, extensionTestsPath, launchArgs: ['--disable-extensions', '--no-sandbox', '--disable-gpu', '--enable-software-rendering', '--ozone-platform=x11', extensionWorkspacePath] }));
     if (exitCode > 0) {
       console.error(`Failed to run tests: ${exitCode}`);
       process.exit(exitCode);
